@@ -33,7 +33,9 @@ const shell = readFileSync(join(DIST, 'index.html'), 'utf8');
 const attr = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
 for (const route of ROUTES) {
-  const url = `${SITE}/${route.path}`;
+  // Pages serves these as directory indexes, so the URL that actually returns
+  // 200 has a trailing slash. Canonical must name that exact form.
+  const url = `${SITE}/${route.path}/`;
   const title = attr(route.title);
   const desc = attr(route.description);
 

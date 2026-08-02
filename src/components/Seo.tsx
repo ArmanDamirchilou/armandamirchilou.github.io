@@ -19,7 +19,9 @@ function setMeta(selector: string, attr: 'name' | 'property', key: string, value
  */
 export function Seo({ title, description, path }: { title: string; description: string; path: string }) {
   useEffect(() => {
-    const url = `${SITE}${path}`;
+    // Pages serves sub-routes as directory indexes; canonical must match the
+    // trailing-slash URL that actually returns 200, not the client-side form.
+    const url = path === '/' ? `${SITE}/` : `${SITE}${path}/`;
     document.title = title;
 
     setMeta('meta[name="description"]', 'name', 'description', description);
