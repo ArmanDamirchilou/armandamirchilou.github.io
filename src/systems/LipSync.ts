@@ -1,7 +1,9 @@
 export class LipSyncAnalyzer {
   private analyser: AnalyserNode | null = null;
-  private timeArray: Uint8Array | null = null;
-  private freqArray: Uint8Array | null = null;
+  // Explicitly backed by ArrayBuffer (not SharedArrayBuffer): the Web Audio
+  // getByte*Data methods only accept that narrower form.
+  private timeArray: Uint8Array<ArrayBuffer> | null = null;
+  private freqArray: Uint8Array<ArrayBuffer> | null = null;
   private audioContext: AudioContext | null = null;
   private source: MediaElementAudioSourceNode | null = null;
   private connectedElements = new WeakSet<HTMLAudioElement>();

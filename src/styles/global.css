@@ -569,6 +569,22 @@ h1, h2, h3, p, a, span, li { overflow-wrap: break-word; }
   .folio-more .btn-solid { width: 100%; }
 }
 
+/* ── Twin: shown when the chat backend isn't reachable ── */
+.twin-offline-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 16px 0;
+  padding: 14px 18px;
+  background: #fff7ed;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: var(--sh-4);
+  flex-shrink: 0;
+}
+.twin-offline-note strong { font-size: 15px; font-weight: 800; }
+.twin-offline-note span { font-size: 14px; line-height: 1.55; color: var(--body); }
+
 /* ════════ EXPERIENCE / JOURNEY — black section ════════ */
 .journey {
   background: var(--ink);

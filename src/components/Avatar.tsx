@@ -83,8 +83,11 @@ export function Avatar({ isSpeaking, isThinking, audioLevel, emotion, onMeasured
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          mesh.material = mesh.material.clone();
-          mesh.material.envMapIntensity = 1.15;
+          // Clone into a local first — assigning back to mesh.material widens
+          // the type to Material and loses envMapIntensity.
+          const mat = mesh.material.clone();
+          mat.envMapIntensity = 1.15;
+          mesh.material = mat;
         }
       }
     });

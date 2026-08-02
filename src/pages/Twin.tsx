@@ -4,7 +4,7 @@ import { AvatarScene } from '../components/AvatarScene';
 import { ChatInterface } from '../components/ChatInterface';
 import { Modal } from '../components/Modal';
 import { VolumeControl } from '../components/VolumeControl';
-import { useChat } from '../hooks/useChat';
+import { useChat, isLocalHost } from '../hooks/useChat';
 import { useAudio } from '../hooks/useAudio';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { Seo } from '../components/Seo';
@@ -101,20 +101,37 @@ export function Twin() {
     setTimeout(() => toggleRecording(), 150);
   }, [toggleRecording]);
 
-  // Poll backend so we can show whether the cloned voice is live.
+  // Poll the backend for both the cloned voice and whether there's a backend
+  // at all. A static host has none, so /api/health 404s — keep retrying in dev
+  // (the server may just be restarting), but stop once deployed so we don't
+  // spam the console with failed requests forever.
   const [voiceLive, setVoiceLive] = useState<boolean | null>(null);
+  const [backendUp, setBackendUp] = useState<boolean | null>(null);
   useEffect(() => {
     let active = true;
-    const check = () =>
-      fetch('/api/health')
-        .then((r) => r.json())
-        .then((d) => active && setVoiceLive(d.voiceClone === 'live'))
-        .catch(() => active && setVoiceLive(false));
+    let id: ReturnType<typeof setInterval> | undefined;
+
+    const check = async () => {
+      try {
+        const r = await fetch('/api/health');
+        if (!r.ok) throw new Error(String(r.status));
+        const d = await r.json();
+        if (!active) return;
+        setBackendUp(true);
+        setVoiceLive(d.voiceClone === 'live');
+      } catch {
+        if (!active) return;
+        setBackendUp(false);
+        setVoiceLive(false);
+        if (id && !isLocalHost()) clearInterval(id);
+      }
+    };
+
     check();
-    const id = setInterval(check, 8000);
+    id = setInterval(check, 8000);
     return () => {
       active = false;
-      clearInterval(id);
+      if (id) clearInterval(id);
     };
   }, []);
 
@@ -133,7 +150,13 @@ export function Twin() {
         <div className="twin-topbar-title">
           <span className="twin-topbar-name">The AI Twin</span>
           <span className={`voice-pill ${voiceLive ? 'live' : ''}`}>
-            {voiceLive ? 'Voice — live' : voiceLive === false ? 'Voice — warming up' : 'Voice — connecting'}
+            {voiceLive
+              ? 'Voice — live'
+              : backendUp === false
+                ? 'Voice — offline'
+                : voiceLive === false
+                  ? 'Voice — warming up'
+                  : 'Voice — connecting'}
           </span>
         </div>
         <Link to="/" className="twin-exit">Close</Link>
@@ -163,6 +186,16 @@ export function Twin() {
 
         {/* Chat */}
         <section className="twin-chat-panel">
+          {backendUp === false && (
+            <div className="twin-offline-note" role="status">
+              <strong>The twin can't talk from here.</strong>
+              <span>
+                {isLocalHost()
+                  ? 'The backend on port 3001 is not responding. Start it with npm run dev, then reload.'
+                  : "His brain and cloned voice run on a server that isn't part of this static site. The 3D avatar is live — the conversation isn't."}
+              </span>
+            </div>
+          )}
           <ChatInterface
             messages={messages}
             isLoading={isLoading}

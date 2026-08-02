@@ -11,6 +11,36 @@ interface UseChatOptions {
   onResponse: (data: ChatResponseData) => void;
 }
 
+export const isLocalHost = () =>
+  ['localhost', '127.0.0.1', '::1', '[::1]'].includes(window.location.hostname);
+
+/**
+ * The chat needs the Express backend. On a static host (GitHub Pages) there
+ * isn't one, so /api/chat answers 404/405 rather than failing to connect —
+ * a visitor should be told that plainly, not handed a developer instruction.
+ */
+function chatErrorMessage(err: unknown): string {
+  const status = err instanceof HttpError ? err.status : 0;
+  const noBackend = status === 404 || status === 405;
+
+  if (isLocalHost()) {
+    return noBackend
+      ? "The API route didn't resolve. Is the backend running on port 3001? Start everything with npm run dev."
+      : "Can't reach the local server. Start it with npm run dev, then try again.";
+  }
+
+  return noBackend
+    ? "My brain runs on a server that isn't part of this static site, so I can't answer here yet. Everything else on the site works — and you can always reach Arman from the contact page."
+    : 'Something went wrong reaching the server. Please try again in a moment.';
+}
+
+class HttpError extends Error {
+  constructor(public status: number) {
+    super(`Server error: ${status}`);
+    this.name = 'HttpError';
+  }
+}
+
 export function useChat({ onResponse }: UseChatOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +75,7 @@ export function useChat({ onResponse }: UseChatOptions) {
       });
 
       if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+        throw new HttpError(response.status);
       }
 
       const data: ChatResponseData = await response.json();
@@ -65,7 +95,7 @@ export function useChat({ onResponse }: UseChatOptions) {
       const errorMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'system',
-        content: 'Connection error. Make sure the server is running (npm run dev).',
+        content: chatErrorMessage(err),
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errorMsg]);
