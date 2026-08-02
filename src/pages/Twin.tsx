@@ -7,6 +7,7 @@ import { VolumeControl } from '../components/VolumeControl';
 import { useChat } from '../hooks/useChat';
 import { useAudio } from '../hooks/useAudio';
 import { useVoiceInput } from '../hooks/useVoiceInput';
+import { Seo } from '../components/Seo';
 
 type Emotion = 'neutral' | 'happy' | 'thinking' | 'surprised' | 'concerned';
 
@@ -122,6 +123,11 @@ export function Twin() {
 
   return (
     <div className="twin-page">
+      <Seo
+        title="AI Twin — talk to a digital Arman Damirchilou"
+        description="A real-time 3D avatar of Arman Damirchilou that answers in his cloned voice: local voice model, LLM reasoning and live facial animation."
+        path="/twin"
+      />
       <header className="twin-topbar">
         <Link to="/" className="twin-back">← Arman Damirchilou</Link>
         <div className="twin-topbar-title">

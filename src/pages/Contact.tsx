@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Reveal } from '../components/Reveal';
 import { PageFooter } from '../components/PageFooter';
+import { Seo } from '../components/Seo';
 
 const EMAIL = 'armandamirchilou@gmail.com';
 
@@ -26,12 +27,6 @@ export function Contact() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const prev = document.title;
-    document.title = 'Contact Me — Arman Damirchilou';
-    return () => { document.title = prev; };
-  }, []);
-
-  useEffect(() => {
     if (!copied) return;
     const id = setTimeout(() => setCopied(false), 1800);
     return () => clearTimeout(id);
@@ -52,6 +47,11 @@ export function Contact() {
 
   return (
     <main>
+      <Seo
+        title="Contact Arman Damirchilou — AI Software Engineer"
+        description="Get in touch with Arman Damirchilou for AI, machine learning and full-stack engineering work. Based in Tehran, Iran, working with teams worldwide."
+        path="/contact"
+      />
       <Navbar />
 
       <section className="contact-hero container">

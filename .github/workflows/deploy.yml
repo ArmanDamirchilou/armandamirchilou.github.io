@@ -40,12 +40,9 @@ jobs:
             echo "VITE_BASE=/$REPO/" >> "$GITHUB_ENV"
           fi
 
-      - run: npm run build
-
-      # Pages has no SPA rewrite rule, so a deep link like /twin would 404.
-      # Serving the app shell as 404.html hands the URL back to React Router.
-      - name: Add SPA fallback
-        run: cp dist/index.html dist/404.html
+      # Builds, then writes a real index.html per route (so crawlers get 200
+      # instead of the 404 fallback) plus the 404.html catch-all.
+      - run: npm run build:pages
 
       - uses: actions/upload-pages-artifact@v3
         with:

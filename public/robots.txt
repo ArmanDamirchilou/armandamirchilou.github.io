@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Generated speech clips are ephemeral and carry no page value.
+Disallow: /audio/
+
+Sitemap: https://armandamirchilou.github.io/sitemap.xml

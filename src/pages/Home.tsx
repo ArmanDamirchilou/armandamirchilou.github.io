@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
+import { Seo } from '../components/Seo';
 import { Reveal } from '../components/Reveal';
 import { AvatarScene } from '../components/AvatarScene';
 import { PageFooter } from '../components/PageFooter';
@@ -86,6 +87,11 @@ const ArrowRight = (
 export function Home() {
   return (
     <main id="top">
+      <Seo
+        title="Arman Damirchilou — AI Software Engineer in Tehran"
+        description="Arman Damirchilou is an AI software engineer from Tehran, Iran, building machine learning, computer vision and voice AI systems. Gold medalist at Innoverse Expo. Talk to his AI twin in his own cloned voice."
+        path="/"
+      />
       <Navbar />
 
       {/* ── Hero ── */}
