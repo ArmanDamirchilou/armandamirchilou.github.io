@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish; queue at most one more.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # A repo named <owner>.github.io is served from the domain root; every
+      # other repo is served from /<repo>/. Vite needs to know which.
+      - name: Resolve Pages base path
+        run: |
+          REPO="${GITHUB_REPOSITORY#*/}"
+          OWNER="${GITHUB_REPOSITORY%/*}"
+          if [ "${REPO,,}" = "${OWNER,,}.github.io" ]; then
+            echo "VITE_BASE=/" >> "$GITHUB_ENV"
+          else
+            echo "VITE_BASE=/$REPO/" >> "$GITHUB_ENV"
+          fi
+
+      - run: npm run build
+
+      # Pages has no SPA rewrite rule, so a deep link like /twin would 404.
+      # Serving the app shell as 404.html hands the URL back to React Router.
+      - name: Add SPA fallback
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

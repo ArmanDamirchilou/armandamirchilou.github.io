@@ -1,0 +1,15 @@
+# Voice cloning (XTTS v2) - pinned versions that work together.
+# IMPORTANT: transformers MUST stay at 4.40.2. Newer versions remove
+# BeamSearchScorer and break Coqui TTS / XTTS loading.
+#
+# Install (GPU, CUDA 11.8):
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#   pip install -r voice/requirements.txt
+#
+# Then run:  python voice/clone_server.py
+
+TTS==0.22.0
+transformers==4.40.2
+tokenizers==0.19.1
+huggingface-hub==0.36.2
+numpy

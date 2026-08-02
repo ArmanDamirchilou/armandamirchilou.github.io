@@ -1,0 +1,22 @@
+node_modules/
+dist/
+dist-server/
+public/audio/
+.env
+*.log
+.DS_Store
+
+# ── Local voice stack ────────────────────────────────────────────────
+# Python venv + HuggingFace model cache: ~6.9 GB of re-downloadable weights.
+# The server scripts (voice/*.py) ARE tracked; only the bulk is ignored.
+voice/.hf-cache/
+voice/chatterbox-venv/
+voice/*.wav
+
+# ── Blender / modelling source ───────────────────────────────────────
+# Working files for the avatar rig. The shipped model is public/model.glb;
+# everything here is scratch and would bloat the repo for no benefit.
+assets/source/
+*.blend
+*.blend1
+*.m4a
