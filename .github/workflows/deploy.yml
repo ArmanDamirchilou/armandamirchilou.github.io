@@ -42,7 +42,13 @@ jobs:
 
       # Builds, then writes a real index.html per route (so crawlers get 200
       # instead of the 404 fallback) plus the 404.html catch-all.
+      #
+      # VITE_API_URL points the twin at its backend Space. Set it as a repo
+      # variable (Settings > Secrets and variables > Actions > Variables).
+      # Left unset, the twin shows its offline notice instead of breaking.
       - run: npm run build:pages
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

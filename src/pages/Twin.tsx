@@ -8,6 +8,7 @@ import { useChat, isLocalHost } from '../hooks/useChat';
 import { useAudio } from '../hooks/useAudio';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { Seo } from '../components/Seo';
+import { api } from '../lib/api';
 
 type Emotion = 'neutral' | 'happy' | 'thinking' | 'surprised' | 'concerned';
 
@@ -45,7 +46,9 @@ export function Twin() {
     async (data: { text: string; audioUrl: string | null; useBrowserTTS: boolean }) => {
       setEmotion('happy');
       if (data.audioUrl && !data.useBrowserTTS) {
-        await playAudio(data.audioUrl);
+        // The backend returns a site-relative path; on a remote backend the
+        // clip lives there, not on the static host serving this page.
+        await playAudio(api(data.audioUrl));
       } else {
         await speakWithBrowserTTS(data.text);
       }
@@ -113,7 +116,7 @@ export function Twin() {
 
     const check = async () => {
       try {
-        const r = await fetch('/api/health');
+        const r = await fetch(api('/api/health'));
         if (!r.ok) throw new Error(String(r.status));
         const d = await r.json();
         if (!active) return;

@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { createClient, AnamEvent } from '@anam-ai/js-sdk';
+import { api } from '../lib/api';
 
 type AnamStatus = 'connecting' | 'live' | 'failed';
 
@@ -38,7 +39,7 @@ export const AnamStage = forwardRef<AnamStageHandle, AnamStageProps>(function An
 
     (async () => {
       try {
-        const r = await fetch('/api/anam/session-token', { method: 'POST' });
+        const r = await fetch(api('/api/anam/session-token'), { method: 'POST' });
         if (!r.ok) throw new Error(`session token request failed (${r.status})`);
         const { sessionToken } = (await r.json()) as { sessionToken: string };
         if (cancelled) return;

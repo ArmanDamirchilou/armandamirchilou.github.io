@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import type { ChatMessage } from '../components/ChatInterface';
+import { api } from '../lib/api';
 
 interface ChatResponseData {
   text: string;
@@ -61,7 +62,7 @@ export function useChat({ onResponse }: UseChatOptions) {
     abortRef.current = new AbortController();
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(api('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
