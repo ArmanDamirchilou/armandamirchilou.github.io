@@ -39,3 +39,14 @@ export function api(path: string): string {
 
 /** True when the app is pointed at a remote backend rather than a local one. */
 export const hasRemoteBackend = () => BASE.length > 0;
+
+/**
+ * Headers every backend request should carry.
+ *
+ * localtunnel serves a "click to continue" interstitial to anything that looks
+ * like a browser, which would turn our fetches into HTML instead of JSON. This
+ * header opts out of it, and is simply ignored by every other tunnel or host.
+ */
+export const apiHeaders: Record<string, string> = {
+  'bypass-tunnel-reminder': 'true',
+};

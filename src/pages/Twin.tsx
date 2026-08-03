@@ -8,7 +8,7 @@ import { useChat, isLocalHost } from '../hooks/useChat';
 import { useAudio } from '../hooks/useAudio';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { Seo } from '../components/Seo';
-import { api } from '../lib/api';
+import { api, apiHeaders } from '../lib/api';
 
 type Emotion = 'neutral' | 'happy' | 'thinking' | 'surprised' | 'concerned';
 
@@ -116,7 +116,7 @@ export function Twin() {
 
     const check = async () => {
       try {
-        const r = await fetch(api('/api/health'));
+        const r = await fetch(api('/api/health'), { headers: apiHeaders });
         if (!r.ok) throw new Error(String(r.status));
         const d = await r.json();
         if (!active) return;
