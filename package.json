@@ -1,6 +1,6 @@
 {
   "name": "arman-personal-website",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Arman's Digital Twin — Interactive Virtual Avatar",
   "main": "index.js",
   "scripts": {
@@ -11,6 +11,7 @@
     "build:pages": "vite build && node scripts/prerender-routes.mjs",
     "build:server": "tsc -p tsconfig.server.json",
     "build:space": "node scripts/build-hf-space.mjs",
+    "twin:url": "node scripts/set-backend-url.mjs",
     "start": "node dist-server/index.js",
     "preview": "vite preview",
     "voice": "python voice/clone_server.py",
