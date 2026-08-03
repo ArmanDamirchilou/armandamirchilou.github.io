@@ -21,3 +21,6 @@ assets/source/
 *.blend1
 *.m4a
 dist-space/
+
+# Local clone of the Hugging Face Space (its own git repo)
+digital-twin/
