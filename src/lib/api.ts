@@ -49,4 +49,5 @@ export const hasRemoteBackend = () => BASE.length > 0;
  */
 export const apiHeaders: Record<string, string> = {
   'bypass-tunnel-reminder': 'true',
+  'ngrok-skip-browser-warning': 'true',
 };
