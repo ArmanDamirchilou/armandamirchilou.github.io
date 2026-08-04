@@ -12,6 +12,7 @@
     "build:server": "tsc -p tsconfig.server.json",
     "build:space": "node scripts/build-hf-space.mjs",
     "twin:url": "node scripts/set-backend-url.mjs",
+    "push:space": "node scripts/push-hf-space.mjs",
     "start": "node dist-server/index.js",
     "preview": "vite preview",
     "voice": "python voice/clone_server.py",

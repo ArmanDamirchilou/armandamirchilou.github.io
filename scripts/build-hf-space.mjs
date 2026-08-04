@@ -57,4 +57,15 @@ writeFileSync(join(OUT, 'requirements.txt'), `${reqs}\n`);
 // Keep the Space repo from carrying build output or local env files.
 writeFileSync(join(OUT, '.gitignore'), 'node_modules/\ndist-server/\npublic/audio/\n.env\n');
 
+// The Hub rejects raw binaries. This must exist BEFORE the wav is staged, or
+// git commits the real 2 MB file and the push is refused — and no later commit
+// can fix it, because the blob stays in history.
+writeFileSync(
+  join(OUT, '.gitattributes'),
+  '*.wav filter=lfs diff=lfs merge=lfs -text\n' +
+    '*.bin filter=lfs diff=lfs merge=lfs -text\n' +
+    '*.pth filter=lfs diff=lfs merge=lfs -text\n' +
+    '*.onnx filter=lfs diff=lfs merge=lfs -text\n'
+);
+
 console.log(`\nSpace staged in ${OUT}/ — push that folder to your Space remote.`);
