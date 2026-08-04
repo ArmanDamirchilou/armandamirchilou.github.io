@@ -1,4 +1,4 @@
 {
-  "url": "https://armandamirchilou-twin.loca.lt",
+  "url": null,
   "_comment": "Public URL of the twin backend. Set it with: npm run twin:url -- <url> --push. null means the twin shows its offline notice."
 }
