@@ -67,6 +67,9 @@ export function useChat({ onResponse }: UseChatOptions) {
         headers: { 'Content-Type': 'application/json', ...apiHeaders },
         body: JSON.stringify({
           message: text,
+          // Ask for text only; Twin fetches the audio from /api/speak next.
+          // One combined request runs long enough that tunnels drop it.
+          skipTts: true,
           history: messages.map(m => ({
             role: m.role,
             content: m.content,

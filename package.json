@@ -1,6 +1,6 @@
 {
   "name": "arman-personal-website",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Arman's Digital Twin — Interactive Virtual Avatar",
   "main": "index.js",
   "scripts": {

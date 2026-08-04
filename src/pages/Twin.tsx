@@ -45,10 +45,37 @@ export function Twin() {
   const handleResponse = useCallback(
     async (data: { text: string; audioUrl: string | null; useBrowserTTS: boolean }) => {
       setEmotion('happy');
-      if (data.audioUrl && !data.useBrowserTTS) {
+
+      // The reply arrives without audio so the text can appear immediately.
+      // Synthesis is a second, shorter request; if it fails or times out the
+      // browser's own voice covers it rather than leaving the twin silent.
+      let url = data.audioUrl;
+      let browserTts = data.useBrowserTTS;
+
+      if (!url && !browserTts) {
+        try {
+          const r = await fetch(api('/api/speak'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...apiHeaders },
+            body: JSON.stringify({ text: data.text }),
+            signal: AbortSignal.timeout(60000),
+          });
+          if (r.ok) {
+            const s = (await r.json()) as { audioUrl: string | null; useBrowserTTS: boolean };
+            url = s.audioUrl;
+            browserTts = s.useBrowserTTS;
+          } else {
+            browserTts = true;
+          }
+        } catch {
+          browserTts = true;
+        }
+      }
+
+      if (url && !browserTts) {
         // The backend returns a site-relative path; on a remote backend the
         // clip lives there, not on the static host serving this page.
-        await playAudio(api(data.audioUrl));
+        await playAudio(api(url));
       } else {
         await speakWithBrowserTTS(data.text);
       }

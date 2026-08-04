@@ -74,7 +74,15 @@ app.post('/api/chat', async (req, res) => {
       history,
     });
 
-    // Generate speech
+    // Voice synthesis can take longer than the reply itself, and bundling both
+    // into one response produces a request long enough for tunnels and proxies
+    // to drop. Clients that pass skipTts get the text straight away and fetch
+    // the audio separately from /api/speak.
+    if (req.body?.skipTts) {
+      res.json({ text: llmResponse.text, audioUrl: null, useBrowserTTS: false });
+      return;
+    }
+
     const ttsResult = await synthesizeSpeech(llmResponse.text, requestId);
 
     res.json({
@@ -85,6 +93,24 @@ app.post('/api/chat', async (req, res) => {
   } catch (err) {
     console.error('[Chat] Error:', err);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Speech for an already-generated reply. Split out from /api/chat so neither
+// request stays open long enough to be dropped in transit.
+app.post('/api/speak', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || typeof text !== 'string') {
+      res.status(400).json({ error: 'Text is required' });
+      return;
+    }
+    const result = await synthesizeSpeech(text, uuidv4());
+    res.json({ audioUrl: result.audioUrl, useBrowserTTS: result.useBrowserTTS });
+  } catch (err) {
+    console.error('[Speak] Error:', err);
+    // Not fatal — the caller falls back to browser speech synthesis.
+    res.status(500).json({ audioUrl: null, useBrowserTTS: true });
   }
 });
 
