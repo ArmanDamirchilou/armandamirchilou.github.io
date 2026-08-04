@@ -13,16 +13,23 @@
 import { cpSync, mkdirSync, rmSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const OUT = 'dist-space';
-const SPACE = join('deploy', 'hf-space');
+// Same backend, two targets: a Hugging Face Space or a Liara Docker app. They
+// differ only in the deploy manifest and the port, so the staging is shared.
+const target = process.argv.includes('--liara') ? 'liara' : 'hf-space';
+const OUT = target === 'liara' ? 'dist-liara' : 'dist-space';
+const SPACE = join('deploy', target);
 
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
-// Space-root files (Dockerfile, README with the HF frontmatter, entrypoint).
-for (const f of ['Dockerfile', 'README.md', 'start.sh']) {
+// Deploy-root files. The Space needs a README carrying HF's YAML frontmatter;
+// Liara needs liara.json instead. start.sh is shared.
+const rootFiles =
+  target === 'liara' ? ['Dockerfile', 'liara.json'] : ['Dockerfile', 'README.md'];
+for (const f of rootFiles) {
   cpSync(join(SPACE, f), join(OUT, f));
 }
+cpSync(join('deploy', 'hf-space', 'start.sh'), join(OUT, 'start.sh'));
 
 // Backend source and the data it reads at runtime.
 for (const f of ['package.json', 'package-lock.json', 'tsconfig.server.json']) {
@@ -68,4 +75,8 @@ writeFileSync(
     '*.onnx filter=lfs diff=lfs merge=lfs -text\n'
 );
 
-console.log(`\nSpace staged in ${OUT}/ — push that folder to your Space remote.`);
+console.log(
+  target === 'liara'
+    ? `\nStaged in ${OUT}/ — deploy it with:\n  cd ${OUT} && liara deploy --app <your-app-name>`
+    : `\nSpace staged in ${OUT}/ — push that folder to your Space remote.`
+);
