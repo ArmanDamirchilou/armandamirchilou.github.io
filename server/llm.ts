@@ -87,7 +87,11 @@ async function callOpenRouter(system: string, history: ChatMsg[]): Promise<strin
     .map((m) => m.trim())
     .filter(Boolean);
 
-  for (const model of models) {
+  // openrouter/free picks a random free model per call, so a bad pick is worth
+  // a retry — the named models are rate-limited per model, retrying them isn't.
+  const attempts = models.flatMap((m) => (m === 'openrouter/free' ? [m, m, m] : [m]));
+
+  for (const model of attempts) {
     try {
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -108,6 +112,12 @@ async function callOpenRouter(system: string, history: ChatMsg[]): Promise<strin
       if (res.ok) {
         const data = (await res.json()) as any;
         const txt = data.choices?.[0]?.message?.content;
+        // The free router sometimes lands on a safety classifier (Llama Guard and
+        // friends), which answers "safe" / "User Safety: safe" instead of chatting.
+        if (txt && isModerationVerdict(txt)) {
+          console.error(`[LLM] OpenRouter ${data.model ?? model} returned a moderation verdict, trying next`);
+          continue;
+        }
         if (txt && txt.trim()) return txt;
       } else {
         console.error(`[LLM] OpenRouter ${model} -> ${res.status}, trying next`);
@@ -117,6 +127,11 @@ async function callOpenRouter(system: string, history: ChatMsg[]): Promise<strin
     }
   }
   return null; // every free model failed this round — caller uses local brain
+}
+
+function isModerationVerdict(text: string): boolean {
+  const t = text.trim();
+  return /^(safe|unsafe)(\s+S\d+(,\s*S\d+)*)?$/i.test(t) || /^(user|agent|response)\s+safety\s*:/i.test(t);
 }
 
 // ── AIML API (OpenAI-compatible aggregator; reachable where OpenAI isn't) ────
