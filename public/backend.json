@@ -1,4 +1,4 @@
 {
-  "url": "https://shy-frog-7.loca.lt",
+  "url": "https://3001-3ab420a9-f52e-4b59-a8ed-276af3a0b43e.proxy.daytona.works",
   "_comment": "Public URL of the twin backend. Set it with: npm run twin:url -- <url> --push. null means the twin shows its offline notice."
 }
