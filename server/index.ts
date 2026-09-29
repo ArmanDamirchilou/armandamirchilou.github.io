@@ -13,7 +13,10 @@ config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// Daytona's preview proxy already answers preflights and stamps its own
+// Access-Control-Allow-Origin; a second one from us makes browsers reject the
+// response outright, so hosts like that set PROXY_HANDLES_CORS=1.
+if (process.env.PROXY_HANDLES_CORS !== '1') app.use(cors());
 app.use(express.json());
 app.use('/audio', express.static(join(process.cwd(), 'public', 'audio')));
 

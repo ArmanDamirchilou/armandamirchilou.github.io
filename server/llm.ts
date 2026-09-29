@@ -111,11 +111,15 @@ async function callOpenRouter(system: string, history: ChatMsg[]): Promise<strin
       });
       if (res.ok) {
         const data = (await res.json()) as any;
-        const txt = data.choices?.[0]?.message?.content;
+        let txt: string | undefined = data.choices?.[0]?.message?.content;
+        // Reasoning models that inline their thinking close it with </think>;
+        // only what comes after is the actual reply.
+        if (txt?.includes('</think>')) txt = txt.slice(txt.lastIndexOf('</think>') + 8);
         // The free router sometimes lands on a safety classifier (Llama Guard and
-        // friends), which answers "safe" / "User Safety: safe" instead of chatting.
-        if (txt && isModerationVerdict(txt)) {
-          console.error(`[LLM] OpenRouter ${data.model ?? model} returned a moderation verdict, trying next`);
+        // friends), which answers "safe" / "User Safety: safe" instead of chatting,
+        // or on a reasoning model that narrates its plan instead of answering.
+        if (txt && (isModerationVerdict(txt) || isLeakedReasoning(txt))) {
+          console.error(`[LLM] OpenRouter ${data.model ?? model} returned a non-reply, trying next`);
           continue;
         }
         if (txt && txt.trim()) return txt;
@@ -132,6 +136,12 @@ async function callOpenRouter(system: string, history: ChatMsg[]): Promise<strin
 function isModerationVerdict(text: string): boolean {
   const t = text.trim();
   return /^(safe|unsafe)(\s+S\d+(,\s*S\d+)*)?$/i.test(t) || /^(user|agent|response)\s+safety\s*:/i.test(t);
+}
+
+function isLeakedReasoning(text: string): boolean {
+  return /^(okay|ok|alright|hmm|so)?[,.\s]*(the user\b|here'?s a thinking process|we need to\b|let me think\b)/i.test(
+    text.trim()
+  );
 }
 
 // ── AIML API (OpenAI-compatible aggregator; reachable where OpenAI isn't) ────
