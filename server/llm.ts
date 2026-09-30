@@ -16,6 +16,30 @@ type ChatMsg = { role: string; content: string };
 // Providers that failed this session — skipped so a dead key never re-adds latency.
 const deadProviders = new Set<string>();
 
+// Replies are spoken aloud in conversation, so they should be a sentence or
+// two. This is a ceiling for the rambling cases, not the target length.
+const MAX_REPLY_TOKENS = 220;
+
+/**
+ * The reply is read out by TTS and shown as plain text, so markdown and emoji
+ * would either be spoken literally ("asterisk asterisk") or render as noise.
+ */
+export function toSpoken(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,!?]|$)/g, '$1$2')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, '')
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, '')
+    .replace(/\s*\n+\s*/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?;:])/g, '$1')
+    .trim();
+}
+
 /**
  * Provider-agnostic brain. Whichever free/paid key is present in .env wins, in
  * this order: Groq (free, no credit card, fast) → Gemini (free tier) → OpenAI.
@@ -70,19 +94,42 @@ export async function generateResponse(req: ChatRequest): Promise<ChatResponse> 
     }
   }
 
-  const finalText = text?.trim() || smartLocalResponse(message);
+  const finalText = toSpoken(text ?? '') || smartLocalResponse(message);
   addToHistory(sessionId, 'assistant', finalText);
   return { text: finalText };
 }
 
 // ── OpenRouter (aggregator; FREE models, reachable where OpenAI isn't) ────────
-// Tries each configured free model in order — if one is rate-limited (429) or
-// gone (404), it falls through to the next, so the twin stays responsive.
+// Tries each configured free model in order, strongest first — if one is
+// rate-limited, slow or broken it falls through to the next, and the whole
+// chain is bounded so a visitor never waits more than OPENROUTER_BUDGET_MS.
+
+const DEFAULT_OPENROUTER_MODELS = [
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'google/gemma-4-31b-it:free',
+  'qwen/qwen3.8-27b:free',
+  'inclusionai/ling-3.0-flash-sante:free',
+  'openrouter/free',
+].join(',');
+
+const OPENROUTER_BUDGET_MS = 20_000;
+const OPENROUTER_ATTEMPT_MS = 12_000;
+
+// Models that just failed are skipped until this time, so a model that's
+// rate-limited for the next hour doesn't cost every message a round trip.
+const cooldownUntil = new Map<string, number>();
+// Models that reject reasoning:{enabled:false} (reasoning is mandatory there).
+const reasoningRequired = new Set<string>();
+
+function coolDown(model: string, ms: number) {
+  // openrouter/free re-rolls its model every call; one bad pick says nothing
+  // about the next.
+  if (model !== 'openrouter/free') cooldownUntil.set(model, Date.now() + ms);
+}
+
 async function callOpenRouter(system: string, history: ChatMsg[]): Promise<string | null> {
-  const models = (
-    process.env.OPENROUTER_MODELS ||
-    'inclusionai/ling-3.0-flash:free,google/gemma-4-26b-a4b-it:free,nvidia/nemotron-3-nano-30b-a3b:free'
-  )
+  const models = (process.env.OPENROUTER_MODELS || DEFAULT_OPENROUTER_MODELS)
     .split(',')
     .map((m) => m.trim())
     .filter(Boolean);
@@ -90,55 +137,89 @@ async function callOpenRouter(system: string, history: ChatMsg[]): Promise<strin
   // openrouter/free picks a random free model per call, so a bad pick is worth
   // a retry — the named models are rate-limited per model, retrying them isn't.
   const attempts = models.flatMap((m) => (m === 'openrouter/free' ? [m, m, m] : [m]));
+  const deadline = Date.now() + OPENROUTER_BUDGET_MS;
 
   for (const model of attempts) {
+    const left = deadline - Date.now();
+    if (left < 1500) {
+      console.error('[LLM] OpenRouter time budget spent, using local brain');
+      break;
+    }
+    if ((cooldownUntil.get(model) ?? 0) > Date.now()) continue;
+
     try {
+      // Thinking models spend 10s+ deliberating before a one-line reply, and
+      // hidden reasoning also eats the token budget and truncates the answer.
+      const noReasoning = !reasoningRequired.has(model);
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'https://arman-damirchilou.dev',
+          'HTTP-Referer': 'https://armandamirchilou.github.io',
           'X-Title': "Arman's AI Twin",
         },
         body: JSON.stringify({
           model,
           messages: [{ role: 'system', content: system }, ...history],
-          max_tokens: 300,
+          max_tokens: MAX_REPLY_TOKENS,
           temperature: 0.85,
+          ...(noReasoning ? { reasoning: { enabled: false } } : {}),
         }),
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(Math.min(OPENROUTER_ATTEMPT_MS, left)),
       });
-      if (res.ok) {
-        const data = (await res.json()) as any;
-        let txt: string | undefined = data.choices?.[0]?.message?.content;
-        // Reasoning models that inline their thinking close it with </think>;
-        // only what comes after is the actual reply.
-        if (txt?.includes('</think>')) txt = txt.slice(txt.lastIndexOf('</think>') + 8);
-        // The free router sometimes lands on a safety classifier (Llama Guard and
-        // friends), which answers "safe" / "User Safety: safe" instead of chatting,
-        // or on a reasoning model that narrates its plan instead of answering.
-        if (txt && (isModerationVerdict(txt) || isLeakedReasoning(txt))) {
-          console.error(`[LLM] OpenRouter ${data.model ?? model} returned a non-reply, trying next`);
-          continue;
+
+      if (!res.ok) {
+        const detail = await res.text().catch(() => '');
+        if (res.status === 400 && noReasoning && /reasoning/i.test(detail)) {
+          reasoningRequired.add(model);
+          console.error(`[LLM] OpenRouter ${model} requires reasoning; will send it next time`);
+        } else {
+          console.error(`[LLM] OpenRouter ${model} -> ${res.status}, trying next`);
+          coolDown(model, res.status === 429 ? 60_000 : 10 * 60_000);
         }
-        if (txt && txt.trim()) return txt;
-      } else {
-        console.error(`[LLM] OpenRouter ${model} -> ${res.status}, trying next`);
+        continue;
       }
+
+      const data = (await res.json()) as any;
+      const choice = data.choices?.[0];
+      let txt: string | undefined = choice?.message?.content;
+      // Reasoning models that inline their thinking close it with </think>;
+      // only what comes after is the actual reply.
+      if (txt?.includes('</think>')) txt = txt.slice(txt.lastIndexOf('</think>') + 8);
+      // The free router sometimes lands on a safety classifier (Llama Guard and
+      // friends), which answers "safe" / "User Safety: safe" instead of chatting,
+      // or on a reasoning model that narrates its plan instead of answering.
+      if (txt && (isModerationVerdict(txt) || isLeakedReasoning(txt))) {
+        console.error(`[LLM] OpenRouter ${data.model ?? model} returned a non-reply, trying next`);
+        coolDown(model, 10 * 60_000);
+        continue;
+      }
+      if (txt && choice?.finish_reason === 'length') txt = trimToLastSentence(txt);
+      if (txt && txt.trim()) return txt;
     } catch (err) {
-      console.error(`[LLM] OpenRouter ${model} error, trying next:`, err);
+      const timedOut = (err as Error)?.name === 'TimeoutError';
+      console.error(`[LLM] OpenRouter ${model} ${timedOut ? 'timed out' : 'error'}, trying next`);
+      coolDown(model, 5 * 60_000);
     }
   }
   return null; // every free model failed this round — caller uses local brain
 }
 
-function isModerationVerdict(text: string): boolean {
+/** A reply cut off by the token limit ends mid-word; keep the whole sentences. */
+export function trimToLastSentence(text: string): string {
+  const t = text.trim();
+  const end = Math.max(t.lastIndexOf('. '), t.lastIndexOf('! '), t.lastIndexOf('? '));
+  if (/[.!?…]["')]?$/.test(t)) return t;
+  return end > 0 ? t.slice(0, end + 1) : t;
+}
+
+export function isModerationVerdict(text: string): boolean {
   const t = text.trim();
   return /^(safe|unsafe)(\s+S\d+(,\s*S\d+)*)?$/i.test(t) || /^(user|agent|response)\s+safety\s*:/i.test(t);
 }
 
-function isLeakedReasoning(text: string): boolean {
+export function isLeakedReasoning(text: string): boolean {
   return /^(okay|ok|alright|hmm|so)?[,.\s]*(the user\b|here'?s a thinking process|we need to\b|let me think\b)/i.test(
     text.trim()
   );
@@ -156,7 +237,7 @@ async function callAIML(system: string, history: ChatMsg[]): Promise<string | nu
     body: JSON.stringify({
       model,
       messages: [{ role: 'system', content: system }, ...history],
-      max_tokens: 300,
+      max_tokens: MAX_REPLY_TOKENS,
       temperature: 0.85,
     }),
     signal: AbortSignal.timeout(30000),
@@ -181,7 +262,7 @@ async function callGroq(system: string, history: ChatMsg[]): Promise<string | nu
     body: JSON.stringify({
       model,
       messages: [{ role: 'system', content: system }, ...history],
-      max_tokens: 300,
+      max_tokens: MAX_REPLY_TOKENS,
       temperature: 0.85,
     }),
     signal: AbortSignal.timeout(30000),
@@ -209,7 +290,7 @@ async function callGemini(system: string, history: ChatMsg[]): Promise<string | 
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents,
-        generationConfig: { maxOutputTokens: 300, temperature: 0.85 },
+        generationConfig: { maxOutputTokens: MAX_REPLY_TOKENS, temperature: 0.85 },
       }),
       signal: AbortSignal.timeout(30000),
     }
@@ -234,7 +315,7 @@ async function callOpenAI(system: string, history: ChatMsg[]): Promise<string | 
     body: JSON.stringify({
       model,
       messages: [{ role: 'system', content: system }, ...history],
-      max_tokens: 300,
+      max_tokens: MAX_REPLY_TOKENS,
       temperature: 0.85,
     }),
     signal: AbortSignal.timeout(30000),

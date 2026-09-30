@@ -5,6 +5,7 @@ interface ConversationEntry {
 }
 
 const MAX_HISTORY = 30;
+const MAX_SESSIONS = 500;
 
 const conversations = new Map<string, ConversationEntry[]>();
 
@@ -18,6 +19,11 @@ export function addToHistory(
   content: string
 ) {
   if (!conversations.has(sessionId)) {
+    // Every visitor gets a session and nothing expires them, so cap the total;
+    // Map keeps insertion order, so the first key is the oldest session.
+    if (conversations.size >= MAX_SESSIONS) {
+      conversations.delete(conversations.keys().next().value!);
+    }
     conversations.set(sessionId, []);
   }
 

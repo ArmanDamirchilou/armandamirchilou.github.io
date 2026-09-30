@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { writeFileSync, mkdirSync, existsSync, renameSync, rmSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, renameSync, rmSync, readdirSync, statSync } from 'fs';
 
 interface TTSResult {
   audioUrl: string | null;
@@ -9,12 +9,60 @@ interface TTSResult {
 const XTTS_URL = 'http://127.0.0.1:5050';
 const CHATTERBOX_URL = 'http://127.0.0.1:5060';
 const VOICEBOX_URL = 'http://127.0.0.1:17493';
+const KOKORO_URL = 'http://127.0.0.1:5070';
+
+// Local voice server behind each mode, for the health check's "voice" field.
+const VOICE_SERVERS: Record<string, string> = {
+  kokoro: KOKORO_URL,
+  chatterbox: CHATTERBOX_URL,
+  clone: XTTS_URL,
+};
+
+/** Whether the local voice engine for the current TTS_MODE is up and loaded. */
+export async function voiceEngineReady(): Promise<boolean> {
+  const base = VOICE_SERVERS[process.env.TTS_MODE || 'edge'];
+  if (!base) return false;
+  try {
+    const r = await fetch(`${base}/health`, { signal: AbortSignal.timeout(1500) });
+    const d = (await r.json()) as { status?: string };
+    return d?.status === 'ready';
+  } catch {
+    return false;
+  }
+}
+
+// Clips are fetched once, right after synthesis, so anything older than this
+// is dead weight; without pruning they pile up until the disk is full.
+const AUDIO_TTL_MS = 15 * 60 * 1000;
+let lastPrune = 0;
+
+function pruneOldAudio() {
+  const now = Date.now();
+  if (now - lastPrune < 60_000) return;
+  lastPrune = now;
+  const dir = join(process.cwd(), 'public', 'audio');
+  if (!existsSync(dir)) return;
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    try {
+      if (now - statSync(path).mtimeMs > AUDIO_TTL_MS) rmSync(path, { recursive: true, force: true });
+    } catch { /* raced with another prune or a request; harmless */ }
+  }
+}
 
 export async function synthesizeSpeech(
   text: string,
   requestId: string
 ): Promise<TTSResult> {
   const mode = process.env.TTS_MODE || 'edge';
+  pruneOldAudio();
+
+  // Kokoro (:5070) — fast CPU voice for hosts without a GPU → Edge fallback
+  if (mode === 'kokoro') {
+    const k = await synthesizeClone(text, requestId, KOKORO_URL, 'Kokoro');
+    if (k.audioUrl) return k;
+    console.log('[TTS] Kokoro unavailable, falling back to Edge TTS');
+  }
 
   // Chatterbox (2026 clone, local :5060) → XTTS (:5050) → Edge fallback chain
   if (mode === 'chatterbox') {
@@ -170,7 +218,7 @@ async function synthesizeClone(
     const filename = `speech_${requestId}.wav`;
     writeFileSync(join(audioDir, filename), buffer);
 
-    console.log(`[TTS] ${label} clone: ${filename}`);
+    console.log(`[TTS] ${label}: ${filename}`);
     return { audioUrl: `/audio/${filename}`, useBrowserTTS: false };
   } catch {
     return { audioUrl: null, useBrowserTTS: true };

@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AvatarScene } from '../components/AvatarScene';
 import { ChatInterface } from '../components/ChatInterface';
@@ -9,6 +9,7 @@ import { useAudio } from '../hooks/useAudio';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { Seo } from '../components/Seo';
 import { api, apiHeaders } from '../lib/api';
+import { splitForSpeech } from '../lib/speech';
 
 type Emotion = 'neutral' | 'happy' | 'thinking' | 'surprised' | 'concerned';
 
@@ -40,46 +41,88 @@ const MicIcon = (
  */
 export function Twin() {
   const [emotion, setEmotion] = useState<Emotion>('neutral');
-  const { isSpeaking, audioLevel, volume, setVolume, playAudio, speakWithBrowserTTS, stopAudio } = useAudio();
+  const { isSpeaking, audioLevel, volume, setVolume, playAudio, speakWithBrowserTTS, stopAudio, unlockAudio } = useAudio();
+
+  // Each reply gets a run number; stopping bumps it, so a voice clip that is
+  // still being synthesised when the user interrupts is dropped, not played.
+  const speechRunRef = useRef(0);
+  const speakAbortRef = useRef<AbortController | null>(null);
+  const [isVoicing, setIsVoicing] = useState(false);
+
+  const stopSpeaking = useCallback(() => {
+    speechRunRef.current++;
+    speakAbortRef.current?.abort();
+    speakAbortRef.current = null;
+    stopAudio();
+    setIsVoicing(false);
+    setEmotion('neutral');
+  }, [stopAudio]);
 
   const handleResponse = useCallback(
     async (data: { text: string; audioUrl: string | null; useBrowserTTS: boolean }) => {
+      const run = ++speechRunRef.current;
       setEmotion('happy');
+      setIsVoicing(true);
+
+      const done = () => {
+        if (run !== speechRunRef.current) return;
+        setIsVoicing(false);
+        setEmotion('neutral');
+      };
+
+      // The backend returns a site-relative path; on a remote backend the
+      // clip lives there, not on the static host serving this page.
+      if (data.audioUrl) {
+        await playAudio(api(data.audioUrl));
+        return done();
+      }
+      if (data.useBrowserTTS) {
+        await speakWithBrowserTTS(data.text);
+        return done();
+      }
 
       // The reply arrives without audio so the text can appear immediately.
-      // Synthesis is a second, shorter request; if it fails or times out the
-      // browser's own voice covers it rather than leaving the twin silent.
-      let url = data.audioUrl;
-      let browserTts = data.useBrowserTTS;
-
-      if (!url && !browserTts) {
+      // It's voiced sentence by sentence: the first clip is short, so the twin
+      // starts talking quickly, and the next one is synthesised while the
+      // current one plays. If a clip fails, the browser's own voice finishes
+      // the rest rather than leaving the twin silent.
+      const ctrl = new AbortController();
+      speakAbortRef.current = ctrl;
+      const fetchClip = async (text: string): Promise<string | null> => {
+        const timer = setTimeout(() => ctrl.abort(), 45000);
         try {
           const r = await fetch(api('/api/speak'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...apiHeaders },
-            body: JSON.stringify({ text: data.text }),
-            signal: AbortSignal.timeout(60000),
+            body: JSON.stringify({ text }),
+            signal: ctrl.signal,
           });
-          if (r.ok) {
-            const s = (await r.json()) as { audioUrl: string | null; useBrowserTTS: boolean };
-            url = s.audioUrl;
-            browserTts = s.useBrowserTTS;
-          } else {
-            browserTts = true;
-          }
+          if (!r.ok) return null;
+          const s = (await r.json()) as { audioUrl: string | null; useBrowserTTS: boolean };
+          return s.useBrowserTTS ? null : s.audioUrl;
         } catch {
-          browserTts = true;
+          return null;
+        } finally {
+          clearTimeout(timer);
         }
-      }
+      };
 
-      if (url && !browserTts) {
-        // The backend returns a site-relative path; on a remote backend the
-        // clip lives there, not on the static host serving this page.
-        await playAudio(api(url));
-      } else {
-        await speakWithBrowserTTS(data.text);
+      const chunks = splitForSpeech(data.text);
+      let next = chunks.length ? fetchClip(chunks[0]) : null;
+      for (let i = 0; i < chunks.length && next; i++) {
+        const url = await next;
+        if (run !== speechRunRef.current) return;
+        next = i + 1 < chunks.length ? fetchClip(chunks[i + 1]) : null;
+        if (url) {
+          await playAudio(api(url));
+        } else {
+          next = null;
+          await speakWithBrowserTTS(chunks.slice(i).join(' '));
+        }
+        if (run !== speechRunRef.current) return;
       }
-      setEmotion('neutral');
+      if (speakAbortRef.current === ctrl) speakAbortRef.current = null;
+      done();
     },
     [playAudio, speakWithBrowserTTS]
   );
@@ -88,14 +131,28 @@ export function Twin() {
 
   const handleSendMessage = useCallback(
     async (text: string) => {
-      stopAudio();
+      stopSpeaking();
+      unlockAudio();
       setEmotion('thinking');
       await sendMessage(text);
     },
-    [sendMessage, stopAudio]
+    [sendMessage, stopSpeaking, unlockAudio]
   );
 
   const { isRecording, toggleRecording } = useVoiceInput(handleSendMessage);
+
+  // Esc interrupts the twin, like cutting someone off mid-sentence; leaving
+  // the page must silence it too, including a clip still being synthesised.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') stopSpeaking();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      stopSpeaking();
+    };
+  }, [stopSpeaking]);
 
   // ── Notices / gates (typing and mic each have their OWN message) ───────────
   const [welcomeOpen, setWelcomeOpen] = useState(true);
@@ -120,10 +177,13 @@ export function Twin() {
   // Mic: the "speak in English" note shows only the FIRST time you record this
   // visit. After that, tapping records immediately. Tapping while recording stops.
   const handleMicClick = useCallback(() => {
+    // Talking to the twin interrupts it — and keeps the mic from hearing it.
+    stopSpeaking();
+    unlockAudio();
     if (isRecording) { toggleRecording(); return; }
     if (micAccepted) { toggleRecording(); return; }
     setMicOpen(true);
-  }, [isRecording, micAccepted, toggleRecording]);
+  }, [isRecording, micAccepted, toggleRecording, stopSpeaking, unlockAudio]);
 
   const acceptMic = useCallback(() => {
     setMicAccepted(true);
@@ -212,6 +272,15 @@ export function Twin() {
             <span className="twin-status-dot" />
             {statusLabel}
           </div>
+
+          {(isSpeaking || isVoicing) && (
+            <button type="button" className="twin-stop" onClick={stopSpeaking} aria-label="Stop talking (Esc)">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+              Stop
+            </button>
+          )}
         </section>
 
         {/* Chat */}
@@ -241,7 +310,7 @@ export function Twin() {
       {/* Welcome notice — shown on entering the Digital Twin */}
       <Modal
         open={welcomeOpen}
-        onAccept={() => setWelcomeOpen(false)}
+        onAccept={() => { unlockAudio(); setWelcomeOpen(false); }}
         accent="azure"
         icon={WaveIcon}
         eyebrow="Welcome to my twin"

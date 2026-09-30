@@ -818,6 +818,38 @@ h1, h2, h3, p, a, span, li { overflow-wrap: break-word; }
 .twin-status.thinking .twin-status-dot { background: var(--azure); animation: pulse 0.9s infinite; }
 .twin-status.speaking .twin-status-dot { background: var(--green); animation: pulse 0.5s infinite; }
 
+/* Interrupt the twin mid-reply (also: Esc, or tapping the mic) */
+.twin-stop {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--ink);
+  color: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--sh-4);
+  animation: twin-stop-in 180ms ease-out;
+}
+.twin-stop svg { width: 14px; height: 14px; }
+.twin-stop:hover { background: var(--coral, #ff5a4e); border-color: var(--ink); }
+.twin-stop:focus-visible { outline: 3px solid var(--azure); outline-offset: 3px; }
+@keyframes twin-stop-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .twin-stop { animation: none; }
+}
+
 .twin-chat-panel {
   display: flex;
   flex-direction: column;

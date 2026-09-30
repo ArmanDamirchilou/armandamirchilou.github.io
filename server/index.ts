@@ -5,7 +5,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { generateResponse } from './llm.js';
-import { synthesizeSpeech } from './tts.js';
+import { synthesizeSpeech, voiceEngineReady } from './tts.js';
 import { loadPersonality } from './personality.js';
 
 config();
@@ -30,14 +30,9 @@ try {
 
 // Health check
 app.get('/api/health', async (_req, res) => {
-  let voiceClone: 'live' | 'down' = 'down';
-  if ((process.env.TTS_MODE || 'edge') === 'clone') {
-    try {
-      const r = await fetch('http://127.0.0.1:5050/health', { signal: AbortSignal.timeout(1500) });
-      const d = (await r.json()) as any;
-      if (d?.status === 'ready') voiceClone = 'live';
-    } catch { /* server not up */ }
-  }
+  // "voiceClone" predates the non-clone engines; the page reads it as "is the
+  // twin's own voice engine up", whichever engine TTS_MODE selects.
+  const voiceClone: 'live' | 'down' = (await voiceEngineReady()) ? 'live' : 'down';
   // Report the actual active brain: first provider key present wins, else the
   // local knowledge-base responder.
   let llm = 'local (knowledge base)';
@@ -65,7 +60,12 @@ app.post('/api/chat', async (req, res) => {
       return;
     }
 
-    const sessionId = req.headers['x-session-id'] as string || 'default';
+    // Each browser tab sends its own id. Falling back to one shared id would
+    // leak one visitor's conversation into another's context, so a missing or
+    // malformed id gets a throwaway session instead.
+    const rawSession = req.headers['x-session-id'];
+    const sessionId =
+      typeof rawSession === 'string' && /^[\w-]{8,64}$/.test(rawSession) ? rawSession : uuidv4();
     const requestId = uuidv4();
 
     console.log(`[Chat] "${message.substring(0, 60)}..." (session: ${sessionId})`);

@@ -21,7 +21,9 @@
     "voice:download": "node scripts/pyvoice.mjs voice/download_model.py",
     "voice:progress": "node voice/download-progress.mjs --watch",
     "dev:full": "concurrently \"npm run dev:client\" \"npm run dev:server\" \"npm run voice\"",
-    "dev:chatterbox": "concurrently \"npm run dev:client\" \"npm run dev:server\" \"npm run voice:chatterbox\""
+    "dev:chatterbox": "concurrently \"npm run dev:client\" \"npm run dev:server\" \"npm run voice:chatterbox\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "avatar",
@@ -61,6 +63,7 @@
     "@types/express": "^5.0.6",
     "@types/uuid": "^10.0.0",
     "concurrently": "^10.0.3",
-    "tsx": "^4.22.4"
+    "tsx": "^4.22.4",
+    "vitest": "^3.2.7"
   }
 }

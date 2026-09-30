@@ -51,4 +51,7 @@ export const apiHeaders: Record<string, string> = {
   'bypass-tunnel-reminder': 'true',
   'ngrok-skip-browser-warning': 'true',
   'X-Daytona-Skip-Preview-Warning': 'true',
+  // One conversation per tab: the server keys its memory on this, so without
+  // it every visitor would share a single chat history.
+  'X-Session-Id': crypto.randomUUID(),
 };
