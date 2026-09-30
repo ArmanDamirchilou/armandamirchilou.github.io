@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useGSAP } from '@gsap/react';
 import '@fontsource-variable/geist';
@@ -28,6 +28,21 @@ export function HomeV2() {
   const heroProgress = useRef(0);
   const [avatarReady, setAvatarReady] = useState(false);
   const onAvatarReady = useCallback(() => setAvatarReady(true), []);
+
+  // Which project card is centred in the phone carousel.
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const [card, setCard] = useState(0);
+  useEffect(() => {
+    const el = cardsRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const first = el.firstElementChild as HTMLElement | null;
+      if (!first || el.scrollWidth <= el.clientWidth) return;
+      setCard(Math.round(el.scrollLeft / (first.offsetWidth + 12)));
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
   useGSAP(
     () => {
@@ -231,7 +246,7 @@ export function HomeV2() {
           <h2 id="work-title" className="v2-h2 v2-rise">
             Things I've built.
           </h2>
-          <div className="v2-cards">
+          <div className="v2-cards" ref={cardsRef}>
             {PROJECTS.map((p, i) => (
               <article key={p.id} className="v2-card" style={{ '--i': i } as React.CSSProperties}>
                 <div className="v2-card-inner lg lg-strong">
@@ -267,6 +282,12 @@ export function HomeV2() {
                   </div>
                 </div>
               </article>
+            ))}
+          </div>
+          {/* Phones swipe through the projects; the dots say where you are. */}
+          <div className="v2-cards-dots" aria-hidden>
+            {PROJECTS.map((p, i) => (
+              <i key={p.id} className={i === card ? 'is-on' : undefined} />
             ))}
           </div>
         </section>

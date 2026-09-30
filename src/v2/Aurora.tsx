@@ -69,7 +69,9 @@ const hex = (h: string) => {
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 };
 
-export const AURORA_PALETTE = ['#140a12', '#7a1d2e', '#3d2a8c', '#0f6e7a'];
+// Graphite with a crimson-velvet glow (#2c0f12 / #6b1e23, from a Pinterest
+// palette) under the pomegranate accent: one warm light in a dark room.
+export const AURORA_PALETTE = ['#0c0d0f', '#2c0f12', '#6b1e23', '#1b1d21'];
 
 export function Aurora({
   className = 'aurora',

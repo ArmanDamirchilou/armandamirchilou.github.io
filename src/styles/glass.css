@@ -82,7 +82,7 @@
 .lg-thin { --lg-blur: 14px; --lg-fill: rgba(255, 255, 255, 0.05); }
 .lg-strong { --lg-blur: 40px; --lg-fill: rgba(255, 255, 255, 0.1); }
 .lg-accent {
-  --lg-tint: linear-gradient(160deg, rgba(234, 72, 88, 0.7), rgba(176, 32, 58, 0.55));
+  --lg-tint: linear-gradient(160deg, rgba(224, 72, 79, 0.85), rgba(160, 36, 44, 0.7));
   --lg-rim: rgba(255, 210, 215, 0.8);
   color: #fff;
 }
@@ -107,10 +107,9 @@
 }
 .aurora.is-fallback {
   background:
-    radial-gradient(60% 50% at 20% 20%, rgba(122, 29, 46, 0.55), transparent 70%),
-    radial-gradient(50% 50% at 80% 30%, rgba(61, 42, 140, 0.5), transparent 70%),
-    radial-gradient(60% 60% at 50% 90%, rgba(15, 110, 122, 0.4), transparent 70%),
-    #0b0a0e;
+    radial-gradient(60% 50% at 25% 20%, rgba(107, 30, 35, 0.45), transparent 70%),
+    radial-gradient(50% 50% at 80% 70%, rgba(44, 15, 18, 0.6), transparent 70%),
+    #0c0d0f;
 }
 
 /* Browsers without backdrop-filter get a solid, still-legible pane. */

@@ -1,0 +1,285 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   The phone edition. Not the desktop page squeezed down: it's laid out for
+   a thumb. Sections live in a floating glass tab bar at the bottom with the
+   twin one tap away beside it; the header shrinks to a monogram and a live
+   Tehran clock; stats become a bento of tiles; projects become a swipeable
+   deck with page dots; the journey becomes a timeline running down a red
+   line. Everything clears the notch, the home indicator and the tab bar.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Phone-only pieces stay out of the desktop page. */
+.v2-tabbar,
+.v2-cards-dots,
+.v2-nav-mono,
+.v2-nav-time { display: none; }
+
+/* The hero's shade fades out before its bottom edge, so there's no seam
+   where the pinned hero hands over to the page below. */
+.v2-hero-sticky::after {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 14%);
+  mask-image: linear-gradient(to top, transparent 0, #000 14%);
+  background:
+    linear-gradient(to top, transparent 0%, rgba(12, 13, 15, 0.78) 12%, rgba(12, 13, 15, 0.42) 30%, transparent 56%),
+    linear-gradient(to right, rgba(12, 13, 15, 0.6) 0%, transparent 45%);
+}
+.v2-hero-stage {
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+}
+
+@media (max-width: 760px) {
+  .v2 { --gutter: 20px; --radius: 26px; -webkit-tap-highlight-color: transparent; }
+
+  /* ── Header: monogram, name, clock ─────────────────────────────────────── */
+  .v2 > .v2-nav {
+    inset-block-start: calc(10px + env(safe-area-inset-top, 0px));
+    width: calc(100% - 20px);
+    height: 54px;
+    padding: 0 7px;
+    --lg-tint: rgba(16, 16, 20, 0.5);
+  }
+  .v2-nav nav { display: none; }
+  .v2-nav-name { display: flex; align-items: center; gap: 11px; font-size: 15.5px; }
+  .v2-nav-mono {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #fff;
+    background: linear-gradient(160deg, #ea5a60, #b8323a);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 16px -6px rgba(224, 72, 79, 0.75);
+  }
+  .v2-nav-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--mute);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+  }
+  .v2-nav-time i { width: 6px; height: 6px; border-radius: 50%; background: #3ee08f; box-shadow: 0 0 8px #3ee08f; }
+
+  /* ── Tab bar ───────────────────────────────────────────────────────────── */
+  .v2 > .v2-tabbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: fixed;
+    z-index: 60;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  .v2-tabbar-tabs {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    height: 64px;
+    padding: 6px;
+    --lg-blur: 30px;
+    --lg-tint: rgba(16, 16, 20, 0.55);
+  }
+  /* The lens: a drop of clearer glass that slides to the current section. */
+  .v2-tabbar-lens {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 6px;
+    width: calc((100% - 12px) / 4);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    transform: translateX(calc(var(--tab, 0) * 100%));
+    transition: transform 0.55s var(--lg-spring), opacity 0.3s;
+  }
+  .v2-tabbar-tabs.no-lens .v2-tabbar-lens { opacity: 0; }
+  .v2-tabbar-tabs a {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--mute);
+    transition: color 0.3s, transform 0.3s var(--lg-spring);
+  }
+  .v2-tabbar-tabs a svg { width: 22px; height: 22px; }
+  .v2-tabbar-tabs a.is-active { color: var(--ink); }
+  .v2-tabbar-tabs a.is-active svg { color: var(--accent); }
+  .v2-tabbar-tabs a:active { transform: scale(0.9); }
+  .v2-tabbar-twin {
+    flex: 0 0 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    --lg-radius: 50%;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 12px 30px -8px rgba(224, 72, 79, 0.7);
+  }
+  .v2-tabbar-twin svg { width: 26px; height: 26px; }
+  /* A slow ring, like a mic that's listening. */
+  .v2-tabbar-twin::after {
+    background: none;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(224, 72, 79, 0.55);
+    opacity: 1;
+    animation: v2-twin-ring 2.6s var(--lg-ease) infinite;
+  }
+  @keyframes v2-twin-ring {
+    0% { box-shadow: 0 0 0 0 rgba(224, 72, 79, 0.5); }
+    70%, 100% { box-shadow: 0 0 0 16px rgba(224, 72, 79, 0); }
+  }
+
+  /* ── Hero ──────────────────────────────────────────────────────────────── */
+  .v2-hero { height: 250vh; }
+  .v2-hero-sticky { height: 100svh; }
+  .v2-hero-copy { bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+  .v2-hero-big { font-size: clamp(44px, 13.2vw, 64px); letter-spacing: -0.045em; }
+  .v2-hero-small { margin-top: 12px; font-size: 17px; }
+  .v2-hero-line .v2-btn { margin-top: 20px; }
+  .v2-hero-cue { display: none; }
+
+  /* ── Manifesto ─────────────────────────────────────────────────────────── */
+  .v2-manifesto { padding-block: 88px 64px; }
+  .v2-manifesto p { font-size: clamp(30px, 8.6vw, 40px); line-height: 1.1; }
+
+  /* ── Stats: a bento of tiles ───────────────────────────────────────────── */
+  .v2-stats { grid-template-columns: 1fr 1fr; gap: 10px; padding-bottom: 88px; }
+  .v2 .v2-stat { padding: 20px 18px !important; border-radius: 24px; }
+  .v2-stat:first-child,
+  .v2-stat:last-child { grid-column: span 2; }
+  .v2-stat:first-child { display: flex; align-items: flex-end; gap: 14px; }
+  .v2-stat:first-child .v2-stat-num { font-size: 112px; }
+  .v2-stat:first-child .v2-stat-label { margin-bottom: 14px; font-size: 17px; }
+  .v2-stat-num { font-size: 60px; }
+  .v2-stat-label { font-size: 14.5px; }
+
+  /* ── Work: a swipeable deck ────────────────────────────────────────────── */
+  .v2-work { padding-bottom: 88px; }
+  .v2-work .v2-h2 { margin-bottom: 26px; }
+  .v2-cards {
+    display: flex;
+    gap: 12px;
+    margin-inline: calc(-1 * var(--gutter));
+    padding: 4px var(--gutter) 10px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .v2-cards::-webkit-scrollbar { display: none; }
+  .v2 .v2-card { flex: 0 0 86%; margin: 0; scroll-snap-align: start; }
+  .v2-card-inner {
+    height: 100%;
+    grid-template-rows: 210px auto;
+    min-height: 0;
+  }
+  .v2-card-visual { order: -1; margin: 10px 10px 0; border-radius: 18px; }
+  .v2-card-text { padding: 18px 20px 22px; gap: 11px; }
+  .v2-card-text h3 { margin-top: 2px; font-size: 30px; }
+  .v2-card-line { font-size: 17px; }
+  .v2-card-detail {
+    font-size: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .v2-cards-dots { display: flex; justify-content: center; gap: 6px; margin-top: 16px; }
+  .v2-cards-dots i {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.22);
+    transition: width 0.45s var(--lg-spring), background-color 0.3s;
+  }
+  .v2-cards-dots i.is-on { width: 22px; background: var(--accent); }
+
+  /* ── Journey: a timeline down a red line ───────────────────────────────── */
+  .v2-journey { padding-block: 72px 24px; gap: 26px; }
+  .v2-journey-track { position: relative; gap: 12px; padding-left: calc(var(--gutter) + 24px); }
+  .v2-journey-track::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--gutter) + 5px);
+    top: 30px;
+    bottom: 30px;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, var(--accent), rgba(224, 72, 79, 0.12));
+  }
+  .v2-milestone { padding: 20px 20px 22px; border-radius: 24px; }
+  .v2-milestone-year { font-size: 44px; }
+  /* The milestone's own pseudo-elements are its glass, so the dot on the
+     line hangs off the year instead. */
+  .v2-milestone-year::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 30px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 12px rgba(224, 72, 79, 0.65);
+  }
+  .v2-milestone.gold .v2-milestone-year::before { background: var(--accent); }
+  .v2-milestone h3 { margin-top: 18px; font-size: 20px; }
+  .v2-milestone p { font-size: 15px; }
+  .v2-medal { top: 20px; right: 20px; width: 30px; height: 30px; }
+
+  /* ── Profile ───────────────────────────────────────────────────────────── */
+  .v2-profile { padding-block: 88px; }
+  .v2-profile-head p { font-size: 17px; }
+  .v2-profile-grid.lg { padding: 4px 18px; border-radius: var(--radius); }
+  .v2-profile-row { padding-block: 18px; }
+  .v2-profile-row li { font-size: 16.5px; }
+
+  /* ── Invitation ────────────────────────────────────────────────────────── */
+  .v2-invite { padding-bottom: 72px; }
+  .v2-invite-inner.lg { padding: 34px 22px 24px; border-radius: 30px; }
+  .v2-invite-inner h2 { font-size: 40px; }
+  .v2-invite-inner p { margin: 16px 0 26px; font-size: 16.5px; }
+  .v2-invite-inner .v2-btn { width: 100%; justify-content: center; }
+
+  /* ── Footer: clears the tab bar ────────────────────────────────────────── */
+  .v2-footer { padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px)); }
+  .v2-footer-title { margin-top: 24px; font-size: 48px; }
+  .v2-footer-mail { font-size: 19px; }
+  .v2-footer-row { margin-top: 32px; }
+  .v2-footer-links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+  .v2-footer-links a {
+    padding: 13px 16px;
+    border-radius: 16px;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+  .v2-footer-links a:last-child { grid-column: span 2; text-align: center; background: rgba(224, 72, 79, 0.16); box-shadow: inset 0 0 0 1px rgba(224, 72, 79, 0.35); }
+  .v2-footer-fine { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  /* Other v2 pages clear the tab bar too. */
+  .v2-contact,
+  .v2-notfound { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
+}
+
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .v2-hero { height: auto; }
+  .v2-tabbar-twin::after { animation: none; }
+}

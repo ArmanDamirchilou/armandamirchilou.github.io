@@ -72,6 +72,38 @@ test.describe('homepage navigation', () => {
   });
 });
 
+test.describe('phone layout', () => {
+  test.skip(({ isMobile }) => !isMobile, 'the tab bar and swipe deck are phone-only');
+
+  test('the tab bar sits at the bottom and takes you to a section', async ({ page }) => {
+    await page.goto('/');
+    const bar = page.locator('.v2-tabbar');
+    await expect(bar).toBeVisible();
+    const box = (await bar.boundingBox())!;
+    const height = page.viewportSize()!.height;
+    expect(box.y + box.height).toBeGreaterThan(height - 40);
+    await expect(page.getByRole('link', { name: 'Talk to my twin' }).last()).toBeVisible();
+
+    await bar.getByRole('link', { name: 'Journey' }).click();
+    await expect
+      .poll(async () => page.locator('#journey').evaluate((el) => Math.abs(el.getBoundingClientRect().top)), { timeout: 8000 })
+      .toBeLessThan(120);
+    await expect(bar.getByRole('link', { name: 'Journey' })).toHaveAttribute('aria-current', 'true');
+  });
+
+  test('projects are a swipeable deck with page dots', async ({ page }) => {
+    await page.goto('/');
+    const deck = page.locator('.v2-cards');
+    await deck.scrollIntoViewIfNeeded();
+    expect(await deck.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+    const dots = page.locator('.v2-cards-dots i');
+    await expect(dots).toHaveCount(7);
+    await expect(dots.nth(0)).toHaveClass(/is-on/);
+    await deck.evaluate((el) => el.scrollTo({ left: (el.firstElementChild as HTMLElement).offsetWidth * 2 + 24 }));
+    await expect(dots.nth(2)).toHaveClass(/is-on/);
+  });
+});
+
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 

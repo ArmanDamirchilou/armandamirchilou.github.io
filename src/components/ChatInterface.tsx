@@ -164,7 +164,7 @@ export function ChatInterface({
           <textarea
             ref={inputRef}
             className="chat-input"
-            placeholder="Ask me anything... (English)"
+            placeholder="Ask me anything…"
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}

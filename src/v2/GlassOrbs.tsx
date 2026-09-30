@@ -5,13 +5,12 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import type { AvatarMeasurement } from '../components/Avatar';
 
 /**
- * Pieces of real glass floating around the portrait: they bend the face and
- * the light behind them, shimmer with thin-film colour, bob gently, lean
- * away from the cursor and drift apart as the page scrolls.
+ * Pieces of smoked glass floating around the portrait: they catch the light,
+ * shimmer faintly with thin-film colour, bob gently, lean away from the
+ * cursor and drift apart as the page scrolls.
  *
  * The reflections come from a procedural studio (RoomEnvironment) rather than
- * a downloaded HDR, so nothing extra loads. Phones get the same shapes with a
- * cheaper see-through material: real transmission renders the scene twice.
+ * a downloaded HDR, so nothing extra loads.
  */
 
 type Piece = {
@@ -59,8 +58,6 @@ export function GlassOrbs({
   const spread = useRef(0);
   const lean = useRef({ x: 0, y: 0 });
 
-  const cheap = useMemo(() => window.matchMedia('(max-width: 800px), (pointer: coarse)').matches, []);
-
   const envMap = useMemo(() => {
     const pmrem = new THREE.PMREMGenerator(gl);
     const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -68,29 +65,26 @@ export function GlassOrbs({
     return env;
   }, [gl]);
 
+  // Smoked glass: dark and see-through, lit only by its reflections, so it
+  // sits in the graphite palette instead of glowing white.
   const material = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
         envMap,
-        envMapIntensity: 0.5,
-        color: new THREE.Color('#ffffff'),
+        envMapIntensity: 1.6,
+        color: new THREE.Color('#0c0d0f'),
         metalness: 0,
         roughness: 0.015,
-        ior: 1.5,
-        thickness: cheap ? 0 : 0.6,
-        transmission: cheap ? 0 : 1,
-        transparent: cheap,
-        opacity: cheap ? 0.28 : 1,
+        transparent: true,
+        opacity: 0.55,
         clearcoat: 1,
         clearcoatRoughness: 0.03,
-        iridescence: 0.75,
+        iridescence: 0.3,
         iridescenceIOR: 1.35,
         iridescenceThicknessRange: [180, 620],
         specularIntensity: 1,
-        attenuationColor: new THREE.Color('#ffd9e0'),
-        attenuationDistance: 1.2,
       }),
-    [envMap, cheap]
+    [envMap]
   );
 
   const geometries = useMemo(() => PIECES.map((p) => geometryFor(p.shape)), []);
