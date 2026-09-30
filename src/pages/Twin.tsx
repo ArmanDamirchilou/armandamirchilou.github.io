@@ -54,7 +54,12 @@ export function Twin() {
 
   const stopSpeaking = useCallback(() => {
     speechRunRef.current++;
-    speakAbortRef.current?.abort();
+    if (speakAbortRef.current) {
+      speakAbortRef.current.abort();
+      // The server prepares a reply's sentences ahead of time; tell it to
+      // stop, so the voice engine isn't busy with lines nobody will hear.
+      fetch(api('/api/speak/cancel'), { method: 'POST', headers: apiHeaders, keepalive: true }).catch(() => {});
+    }
     speakAbortRef.current = null;
     stopAudio();
     setIsVoicing(false);

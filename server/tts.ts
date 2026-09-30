@@ -1,9 +1,14 @@
 import { join } from 'path';
 import { writeFileSync, mkdirSync, existsSync, renameSync, rmSync, readdirSync, statSync } from 'fs';
+import { randomUUID } from 'crypto';
+import { cancelGroup, requestClip, workerAlive } from './voiceWorker.js';
+import { splitForSpeech } from './speech.js';
 
 interface TTSResult {
   audioUrl: string | null;
   useBrowserTTS: boolean;
+  /** The visitor moved on; nobody will play this, so don't fall back either. */
+  cancelled?: boolean;
 }
 
 const XTTS_URL = 'http://127.0.0.1:5050';
@@ -18,10 +23,7 @@ const VOICE_SERVERS: Record<string, string> = {
   clone: XTTS_URL,
 };
 
-/** Whether the local voice engine for the current TTS_MODE is up and loaded. */
-export async function voiceEngineReady(): Promise<boolean> {
-  const base = VOICE_SERVERS[process.env.TTS_MODE || 'edge'];
-  if (!base) return false;
+async function serverReady(base: string): Promise<boolean> {
   try {
     const r = await fetch(`${base}/health`, { signal: AbortSignal.timeout(1500) });
     const d = (await r.json()) as { status?: string };
@@ -29,6 +31,42 @@ export async function voiceEngineReady(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Which voice the twin is speaking with right now: 'clone' (Arman's own, from
+ * the remote worker), 'standard' (a local engine), or null (none, so the
+ * browser's built-in voice takes over).
+ */
+export async function activeVoice(): Promise<'clone' | 'standard' | null> {
+  const mode = process.env.TTS_MODE || 'edge';
+  if (mode === 'clone-remote') {
+    if (workerAlive()) return 'clone';
+    return (await serverReady(KOKORO_URL)) ? 'standard' : null;
+  }
+  const base = VOICE_SERVERS[mode];
+  if (!base) return null;
+  return (await serverReady(base)) ? (mode === 'kokoro' ? 'standard' : 'clone') : null;
+}
+
+/** Arman's cloned voice from the worker, written out like any other clip. */
+async function synthesizeRemoteClone(text: string, requestId: string, group?: string): Promise<TTSResult> {
+  const started = Date.now();
+  const wav = await requestClip(text, 20_000, group);
+  if (wav === 'cancelled') return { audioUrl: null, useBrowserTTS: false, cancelled: true };
+  if (!wav) {
+    console.log(`[TTS] Clone (worker) gave nothing after ${Date.now() - started}ms, using fallback`);
+    return { audioUrl: null, useBrowserTTS: true };
+  }
+  const audioDir = join(process.cwd(), 'public', 'audio');
+  if (!existsSync(audioDir)) mkdirSync(audioDir, { recursive: true });
+  // The worker sends AAC (an MP4 box: "ftyp" at byte 4) when it can, WAV
+  // otherwise; the extension decides the Content-Type the clip is served with.
+  const ext = wav.subarray(4, 8).toString('latin1') === 'ftyp' ? 'm4a' : 'wav';
+  const filename = `speech_${requestId}.${ext}`;
+  writeFileSync(join(audioDir, filename), wav);
+  console.log(`[TTS] Clone (worker): ${filename} ${wav.length}B in ${Date.now() - started}ms`);
+  return { audioUrl: `/audio/${filename}`, useBrowserTTS: false };
 }
 
 // Clips are fetched once, right after synthesis, so anything older than this
@@ -50,15 +88,58 @@ function pruneOldAudio() {
   }
 }
 
-export async function synthesizeSpeech(
-  text: string,
-  requestId: string
-): Promise<TTSResult> {
+// Clips started before the page asked for them, keyed by visitor + exact text.
+const prefetched = new Map<string, { clip: Promise<TTSResult>; at: number; group: string }>();
+const PREFETCH_TTL_MS = 2 * 60 * 1000;
+const key = (group: string, text: string) => `${group}\u0000${text}`;
+
+/**
+ * Starts voicing a reply the moment it exists, sentence by sentence, instead
+ * of waiting for the page to request each one. Only worth it for the remote
+ * clone, where every clip pays a slow round trip to the worker: by the time
+ * the page asks for sentence two, it is usually already here. The page splits
+ * with the same splitForSpeech, so its requests match these keys exactly.
+ */
+export function prefetchSpeech(text: string, group: string) {
+  if ((process.env.TTS_MODE || 'edge') !== 'clone-remote' || !workerAlive()) return;
+  const now = Date.now();
+  for (const [k, entry] of prefetched) if (now - entry.at > PREFETCH_TTL_MS) prefetched.delete(k);
+  for (const chunk of splitForSpeech(text)) {
+    if (prefetched.has(key(group, chunk))) continue;
+    const clip = synthesizeFresh(chunk, randomUUID(), group);
+    clip.catch(() => {});
+    prefetched.set(key(group, chunk), { clip, at: now, group });
+  }
+}
+
+/** The visitor interrupted: stop preparing anything they haven't heard yet. */
+export function cancelSpeech(group: string) {
+  for (const [k, entry] of prefetched) if (entry.group === group) prefetched.delete(k);
+  cancelGroup(group);
+}
+
+export async function synthesizeSpeech(text: string, requestId: string, group = requestId): Promise<TTSResult> {
+  const hit = prefetched.get(key(group, text));
+  if (hit && Date.now() - hit.at < PREFETCH_TTL_MS) {
+    prefetched.delete(key(group, text));
+    const r = await hit.clip;
+    if (!r.cancelled) return r;
+  }
+  return synthesizeFresh(text, requestId, group);
+}
+
+async function synthesizeFresh(text: string, requestId: string, group?: string): Promise<TTSResult> {
   const mode = process.env.TTS_MODE || 'edge';
   pruneOldAudio();
 
+  // Arman's cloned voice from the remote worker → Kokoro → Edge fallback
+  if (mode === 'clone-remote') {
+    const c = await synthesizeRemoteClone(text, requestId, group);
+    if (c.audioUrl || c.cancelled) return c;
+  }
+
   // Kokoro (:5070) — fast CPU voice for hosts without a GPU → Edge fallback
-  if (mode === 'kokoro') {
+  if (mode === 'kokoro' || mode === 'clone-remote') {
     const k = await synthesizeClone(text, requestId, KOKORO_URL, 'Kokoro');
     if (k.audioUrl) return k;
     console.log('[TTS] Kokoro unavailable, falling back to Edge TTS');

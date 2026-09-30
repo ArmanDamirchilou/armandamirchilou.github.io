@@ -5,7 +5,8 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { generateResponse } from './llm.js';
-import { synthesizeSpeech, voiceEngineReady } from './tts.js';
+import { activeVoice, cancelSpeech, prefetchSpeech, synthesizeSpeech } from './tts.js';
+import { deliver, nextJobs, releaseWaiter, requeue } from './voiceWorker.js';
 import { loadPersonality } from './personality.js';
 
 config();
@@ -30,9 +31,10 @@ try {
 
 // Health check
 app.get('/api/health', async (_req, res) => {
-  // "voiceClone" predates the non-clone engines; the page reads it as "is the
-  // twin's own voice engine up", whichever engine TTS_MODE selects.
-  const voiceClone: 'live' | 'down' = (await voiceEngineReady()) ? 'live' : 'down';
+  // "voiceClone" predates the non-clone engines; the page reads it as "does
+  // the twin have a real voice right now". "voice" says which one.
+  const voice = await activeVoice();
+  const voiceClone: 'live' | 'down' = voice ? 'live' : 'down';
   // Report the actual active brain: first provider key present wins, else the
   // local knowledge-base responder.
   let llm = 'local (knowledge base)';
@@ -47,8 +49,65 @@ app.get('/api/health', async (_req, res) => {
     llm,
     tts: process.env.TTS_MODE || 'edge',
     voiceClone,
+    voice,
   });
 });
+
+// ── Voice worker (Arman's Mac) ───────────────────────────────────────────────
+// The worker can't be reached from here, so it long-polls for text and posts
+// the finished WAV back. Both routes need the shared VOICE_WORKER_TOKEN; with
+// no token configured they don't exist at all.
+function workerAuthorized(req: express.Request): boolean {
+  const token = process.env.VOICE_WORKER_TOKEN;
+  return !!token && token.length >= 24 && req.headers.authorization === `Bearer ${token}`;
+}
+
+app.get('/api/voice/next', async (req, res) => {
+  if (!workerAuthorized(req)) {
+    res.status(404).end();
+    return;
+  }
+  // res (not req) 'close': a request's own close fires once its body is read,
+  // which for a GET is immediately. Closing before we've answered = worker gone.
+  let closed = false;
+  res.on('close', () => {
+    if (!res.writableEnded) {
+      closed = true;
+      releaseWaiter();
+    }
+  });
+  const jobs = await nextJobs(20_000);
+  if (closed) {
+    jobs.forEach((j) => requeue(j.id));
+    return;
+  }
+  if (!jobs.length) {
+    res.status(204).end();
+    return;
+  }
+  res.json({ jobs });
+});
+
+app.post(
+  '/api/voice/result/:id',
+  express.raw({ type: ['audio/wav', 'audio/x-wav', 'audio/mp4', 'application/octet-stream'], limit: '10mb' }),
+  (req, res) => {
+    if (!workerAuthorized(req)) {
+      res.status(404).end();
+      return;
+    }
+    const wav = Buffer.isBuffer(req.body) && req.body.length > 44 ? req.body : null;
+    res.status(deliver(req.params.id, wav) ? 204 : 410).end();
+  }
+);
+
+// Each browser tab sends its own id. Falling back to one shared id would leak
+// one visitor's conversation into another's context, so a missing or malformed
+// id gets a throwaway session instead.
+function sessionOf(req: express.Request): string {
+  const raw = req.headers['x-session-id'];
+  return typeof raw === 'string' && /^[\w-]{8,64}$/.test(raw) ? raw : uuidv4();
+}
 
 // Chat endpoint
 app.post('/api/chat', async (req, res) => {
@@ -60,13 +119,10 @@ app.post('/api/chat', async (req, res) => {
       return;
     }
 
-    // Each browser tab sends its own id. Falling back to one shared id would
-    // leak one visitor's conversation into another's context, so a missing or
-    // malformed id gets a throwaway session instead.
-    const rawSession = req.headers['x-session-id'];
-    const sessionId =
-      typeof rawSession === 'string' && /^[\w-]{8,64}$/.test(rawSession) ? rawSession : uuidv4();
+    const sessionId = sessionOf(req);
     const requestId = uuidv4();
+    // A new question means the last answer won't be heard out.
+    cancelSpeech(sessionId);
 
     console.log(`[Chat] "${message.substring(0, 60)}..." (session: ${sessionId})`);
 
@@ -82,11 +138,12 @@ app.post('/api/chat', async (req, res) => {
     // to drop. Clients that pass skipTts get the text straight away and fetch
     // the audio separately from /api/speak.
     if (req.body?.skipTts) {
+      prefetchSpeech(llmResponse.text, sessionId);
       res.json({ text: llmResponse.text, audioUrl: null, useBrowserTTS: false });
       return;
     }
 
-    const ttsResult = await synthesizeSpeech(llmResponse.text, requestId);
+    const ttsResult = await synthesizeSpeech(llmResponse.text, requestId, sessionId);
 
     res.json({
       text: llmResponse.text,
@@ -108,13 +165,19 @@ app.post('/api/speak', async (req, res) => {
       res.status(400).json({ error: 'Text is required' });
       return;
     }
-    const result = await synthesizeSpeech(text, uuidv4());
+    const result = await synthesizeSpeech(text, uuidv4(), sessionOf(req));
     res.json({ audioUrl: result.audioUrl, useBrowserTTS: result.useBrowserTTS });
   } catch (err) {
     console.error('[Speak] Error:', err);
     // Not fatal — the caller falls back to browser speech synthesis.
     res.status(500).json({ audioUrl: null, useBrowserTTS: true });
   }
+});
+
+// The visitor pressed Stop: drop the rest of the reply that's being prepared.
+app.post('/api/speak/cancel', (req, res) => {
+  cancelSpeech(sessionOf(req));
+  res.status(204).end();
 });
 
 // Anam session token — the API key stays server-side; the browser only ever
