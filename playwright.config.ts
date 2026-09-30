@@ -16,6 +16,9 @@ export default defineConfig({
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    // Safari's engine: its media element and autoplay rules differ, and the
+    // twin's voice once worked in Chrome only.
+    { name: 'safari', use: { ...devices['Desktop Safari'], launchOptions: {} }, testMatch: /twin\.spec/ },
   ],
   webServer: {
     command: 'npm run build && npx vite preview --port 4174 --strictPort',

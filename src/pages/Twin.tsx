@@ -73,10 +73,34 @@ export function Twin() {
         setEmotion('neutral');
       };
 
-      // The backend returns a site-relative path; on a remote backend the
-      // clip lives there, not on the static host serving this page.
+      const ctrl = new AbortController();
+      speakAbortRef.current = ctrl;
+
+      // Clips are downloaded with fetch, not handed to <audio> as a URL: a
+      // media element can't send the header that gets past a hosting proxy's
+      // "preview warning" page (Daytona serves real browsers that HTML page in
+      // place of the WAV). A blob URL is also same-origin, so lip-sync can read
+      // it without CORS. The backend returns a site-relative path, which lives
+      // on the backend host, not on the static host serving this page.
+      const loadClip = async (path: string): Promise<string | null> => {
+        const r = await fetch(api(path), { headers: apiHeaders, signal: ctrl.signal });
+        const blob = await r.blob();
+        if (!r.ok || !blob.type.startsWith('audio/')) return null;
+        return URL.createObjectURL(blob);
+      };
+      const playClip = async (url: string) => {
+        try {
+          await playAudio(url);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      };
+
       if (data.audioUrl) {
-        await playAudio(api(data.audioUrl));
+        const url = await loadClip(data.audioUrl).catch(() => null);
+        if (run !== speechRunRef.current) return;
+        if (url) await playClip(url);
+        else await speakWithBrowserTTS(data.text);
         return done();
       }
       if (data.useBrowserTTS) {
@@ -89,8 +113,7 @@ export function Twin() {
       // starts talking quickly, and the next one is synthesised while the
       // current one plays. If a clip fails, the browser's own voice finishes
       // the rest rather than leaving the twin silent.
-      const ctrl = new AbortController();
-      speakAbortRef.current = ctrl;
+      // Resolves to a playable blob URL, or null if this clip couldn't be made.
       const fetchClip = async (text: string): Promise<string | null> => {
         const timer = setTimeout(() => ctrl.abort(), 45000);
         try {
@@ -102,7 +125,7 @@ export function Twin() {
           });
           if (!r.ok) return null;
           const s = (await r.json()) as { audioUrl: string | null; useBrowserTTS: boolean };
-          return s.useBrowserTTS ? null : s.audioUrl;
+          return s.useBrowserTTS || !s.audioUrl ? null : await loadClip(s.audioUrl);
         } catch {
           return null;
         } finally {
@@ -114,10 +137,13 @@ export function Twin() {
       let next = chunks.length ? fetchClip(chunks[0]) : null;
       for (let i = 0; i < chunks.length && next; i++) {
         const url = await next;
-        if (run !== speechRunRef.current) return;
+        if (run !== speechRunRef.current) {
+          if (url) URL.revokeObjectURL(url);
+          return;
+        }
         next = i + 1 < chunks.length ? fetchClip(chunks[i + 1]) : null;
         if (url) {
-          await playAudio(api(url));
+          await playClip(url);
         } else {
           next = null;
           await speakWithBrowserTTS(chunks.slice(i).join(' '));

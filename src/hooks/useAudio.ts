@@ -1,9 +1,32 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { LipSyncAnalyzer } from '../systems/LipSync';
 
-// 0.1s of silence — played inside a user gesture to unlock playback.
-const SILENT_WAV =
-  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+// 50ms of silence, played inside a user gesture to unlock later playback. It
+// must contain real samples: Safari fails to decode a zero-length WAV, and a
+// failed play() leaves the element locked.
+let silentWav: string | null = null;
+function silentWavUrl(): string {
+  if (silentWav) return silentWav;
+  const rate = 8000;
+  const samples = rate / 20;
+  const buf = new ArrayBuffer(44 + samples * 2);
+  const v = new DataView(buf);
+  const text = (at: number, s: string) => [...s].forEach((c, i) => v.setUint8(at + i, c.charCodeAt(0)));
+  text(0, 'RIFF');
+  v.setUint32(4, 36 + samples * 2, true);
+  text(8, 'WAVEfmt ');
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  text(36, 'data');
+  v.setUint32(40, samples * 2, true);
+  silentWav = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+  return silentWav;
+}
 
 export function useAudio() {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -39,7 +62,7 @@ export function useAudio() {
     const ctx = analyzerRef.current.getAudioContext();
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
     if (settleRef.current || !el.paused) return;
-    el.src = SILENT_WAV;
+    el.src = silentWavUrl();
     el.play().then(() => el.pause()).catch(() => {});
   }, [getEl]);
 

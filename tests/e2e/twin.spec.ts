@@ -56,6 +56,11 @@ async function mockBackend(page: Page, opts: { healthy?: boolean } = {}): Promis
       return route.fulfill({ headers: cors, json: { audioUrl: `/audio/clip-${mock.speaks.length}.wav`, useBrowserTTS: false } });
     }
     if (path.startsWith('/audio/')) {
+      // Like Daytona's proxy: a browser request without the bypass header
+      // gets an HTML warning page instead of the file.
+      if (!req.headers()['x-daytona-skip-preview-warning']) {
+        return route.fulfill({ headers: { ...cors, 'content-type': 'text/html' }, body: '<!doctype html><p>Preview warning</p>' });
+      }
       return route.fulfill({ headers: { ...cors, 'content-type': 'audio/wav' }, body: CLIP });
     }
     return route.fulfill({ status: 404, headers: cors });
