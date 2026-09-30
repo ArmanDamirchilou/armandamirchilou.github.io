@@ -13,6 +13,7 @@ const SECTIONS = [
   { hash: '#work', label: 'Work' },
   { hash: '#journey', label: 'Journey' },
   { hash: '#profile', label: 'Profile' },
+  { hash: '#contact', label: 'Contact' },
 ];
 
 /** Puts the v2 ground on <html>/<body> while a v2 page is mounted. */
@@ -47,6 +48,12 @@ const Icon = {
       <path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" />
     </>
   ),
+  contact: (
+    <>
+      <rect x="3.5" y="5.5" width="17" height="13" rx="3" />
+      <path d="m4.5 7.5 7.5 5.5 7.5-5.5" />
+    </>
+  ),
   wave: <path d="M4 12h1.5M8 8.5v7M12 5v14M16 8v8M20 11v2" />,
 };
 
@@ -55,6 +62,7 @@ const TABS = [
   { hash: '#work', label: 'Work', icon: Icon.work },
   { hash: '#journey', label: 'Journey', icon: Icon.journey },
   { hash: '#profile', label: 'Profile', icon: Icon.profile },
+  { hash: '#contact', label: 'Contact', icon: Icon.contact },
 ];
 
 /** Which home section is on screen, for the phone tab bar's highlight. */
@@ -62,7 +70,7 @@ function useActiveSection(enabled: boolean) {
   const [active, setActive] = useState('#top');
   useEffect(() => {
     if (!enabled) return;
-    const ids = ['#work', '#journey', '#profile'];
+    const ids = ['#work', '#journey', '#profile', '#contact'];
     const pick = () => {
       // The last section whose top has passed a third of the way down.
       const line = window.innerHeight / 3;
@@ -151,7 +159,7 @@ export function V2Nav() {
 export function V2Footer() {
   const time = useTehranTime();
   return (
-    <footer className="v2-footer v2-wrap" id="contact">
+    <footer className="v2-footer v2-wrap">
       <h2 className="v2-footer-title">Let's build something.</h2>
       <a className="v2-footer-mail" href={`mailto:${LINKS.email}`}>
         {LINKS.email}

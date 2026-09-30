@@ -26,6 +26,15 @@ test.describe('homepage', () => {
     await expect(page.locator('.v2-milestone')).toHaveCount(7);
     await expect(page.locator('.v2-profile-row')).toHaveCount(6);
     await expect(page.locator('.v2-footer-mail')).toHaveAttribute('href', 'mailto:armandamirchilou@gmail.com');
+    // The contact section: a message form and every channel, on the homepage.
+    const contact = page.locator('#contact');
+    // Located by tag: until it's scrolled to, the heading is still faded out.
+    await expect(contact.locator('h2', { hasText: 'Say hello.' })).toBeAttached();
+    await expect(contact.locator('form.v2-form')).toBeAttached();
+    for (const name of ['Telegram', 'LinkedIn', 'GitHub', 'X']) {
+      await expect(contact.locator('.v2-channel-name', { hasText: new RegExp(`^${name}$`) })).toBeAttached();
+    }
+    await expect(page.locator('[id="contact"]')).toHaveCount(1);
     expect(errors).toEqual([]);
   });
 
@@ -61,6 +70,14 @@ test.describe('homepage navigation', () => {
       .poll(async () => page.locator('#profile').evaluate((el) => Math.abs(el.getBoundingClientRect().top)), { timeout: 6000 })
       .toBeLessThan(80);
     await expect(page).toHaveURL(/#profile$/);
+  });
+
+  test('the Contact link scrolls to the contact section', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Contact' }).click();
+    await expect
+      .poll(async () => page.locator('#contact').evaluate((el) => Math.abs(el.getBoundingClientRect().top)), { timeout: 8000 })
+      .toBeLessThan(80);
   });
 
   test('a /#section link from another page lands on that section', async ({ page }) => {

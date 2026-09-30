@@ -83,7 +83,7 @@
   .v2-tabbar-tabs {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     height: 64px;
     padding: 6px;
     --lg-blur: 30px;
@@ -95,7 +95,7 @@
     top: 6px;
     bottom: 6px;
     left: 6px;
-    width: calc((100% - 12px) / 4);
+    width: calc((100% - 12px) / 5);
     border-radius: 999px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
@@ -111,9 +111,9 @@
     align-items: center;
     justify-content: center;
     gap: 3px;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     color: var(--mute);
     transition: color 0.3s, transform 0.3s var(--lg-spring);
   }
@@ -273,6 +273,18 @@
   }
   .v2-footer-links a:last-child { grid-column: span 2; text-align: center; background: rgba(224, 72, 79, 0.16); box-shadow: inset 0 0 0 1px rgba(224, 72, 79, 0.35); }
   .v2-footer-fine { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  /* ── Contact: form, then a 2x2 of channel tiles ────────────────────────── */
+  .v2-contact-section { padding-block: 24px 72px; }
+  .v2-contact-head p { font-size: 17px; }
+  .v2-form.lg { padding: 20px 18px; gap: 16px; }
+  .v2-form-foot .v2-btn { width: 100%; justify-content: center; }
+  .v2-channels { gap: 10px; }
+  .v2 .v2-channel.lg { padding: 16px 16px 14px; border-radius: 22px; }
+  .v2-channel-icon { width: 24px; height: 24px; margin-bottom: 10px; }
+  .v2 .v2-channel-name { font-size: 18px; }
+  .v2 .v2-channel .v2-channel-value { font-size: 13.5px; }
+  .v2 .v2-channel .v2-channel-arrow { top: 16px; right: 16px; }
 
   /* Other v2 pages clear the tab bar too. */
   .v2-contact,

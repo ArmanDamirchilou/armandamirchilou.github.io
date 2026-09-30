@@ -8,6 +8,7 @@ import { Seo } from '../components/Seo';
 import { ProjectArt } from '../v2/ProjectArt';
 import { gsap, ScrollTrigger, prefersReducedMotion, scrollToTarget, useSmoothScroll } from '../v2/scroll';
 import { V2Backdrop, V2Footer, V2Nav, useV2Root } from '../v2/Chrome';
+import { ContactPanel } from '../v2/ContactPanel';
 import { HERO_LINES, JOURNEY, MANIFESTO, PROFILE, PROJECTS, STATS } from '../v2/content';
 
 // three.js is most of the page's JavaScript; loading it on its own lets the
@@ -348,6 +349,11 @@ export function HomeV2() {
               Talk to my twin {Arrow}
             </Link>
           </div>
+        </section>
+
+        {/* ── Contact ──────────────────────────────────────────────────────── */}
+        <section className="v2-contact v2-contact-section v2-wrap" id="contact" aria-labelledby="contact-title">
+          <ContactPanel />
         </section>
       </main>
 

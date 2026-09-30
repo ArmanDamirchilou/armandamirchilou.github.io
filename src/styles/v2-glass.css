@@ -163,6 +163,33 @@ html.is-v2 #root { background: #0c0d0f; }
 }
 .v2-footer-mail:hover { background-size: 100% 1px, auto; }
 
+/* ── Contact (homepage section and /contact) ─────────────────────────────── */
+.v2-contact-section { padding-block: clamp(40px, 8vh, 100px) clamp(100px, 16vh, 180px); }
+.v2-form.lg { padding: clamp(22px, 3vw, 36px); border-radius: var(--radius); }
+.v2-channels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 0; }
+.v2 .v2-channel.lg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 20px 20px 18px;
+  border: 0;
+  border-radius: 24px;
+}
+.v2-channel-icon { width: 26px; height: 26px; margin-bottom: 14px; color: var(--ink); }
+.v2-channel .v2-channel-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+.v2 .v2-channel .v2-channel-arrow { position: absolute; top: 20px; right: 20px; color: var(--mute); }
+.v2-channel-mail.lg,
+.v2-channel-twin.lg { grid-column: span 2; }
+.v2 .v2-channel-mail.lg { align-items: flex-start; gap: 6px; }
+.v2-channel-mail.lg a { overflow-wrap: anywhere; }
+.v2 .v2-channel-mail .v2-copy { align-self: flex-start; margin-top: 8px; }
+.v2-channel-twin.lg {
+  --lg-tint: linear-gradient(135deg, rgba(224, 72, 79, 0.32), rgba(107, 30, 35, 0.22));
+  --lg-rim: rgba(255, 196, 196, 0.8);
+}
+.v2 .v2-channel-twin .v2-channel-name { color: #fff; }
+
 /* ── Contact page ────────────────────────────────────────────────────────── */
 .v2-form :is(input, textarea) {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
