@@ -89,19 +89,30 @@ export function useAudio() {
     return () => cancelAnimationFrame(rafRef.current);
   }, [isSpeaking, updateLevels]);
 
-  const playAudio = useCallback((url: string) => {
+  /**
+   * Plays a clip; resolves when it ends or is stopped. `onTime` gets the
+   * playback position every frame, which is what keeps the captions in step.
+   */
+  const playAudio = useCallback((url: string, onTime?: (seconds: number, duration: number) => void) => {
     settleRef.current?.();
     return new Promise<void>((resolve) => {
       const el = getEl();
       const ctx = analyzerRef.current.getAudioContext();
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
+      let raf = 0;
+      const tick = () => {
+        if (settleRef.current !== finish) return;
+        onTime?.(el.currentTime, el.duration);
+        raf = requestAnimationFrame(tick);
+      };
       const onReady = () => {
         if (settleRef.current !== finish) return;
         setIsSpeaking(true);
-        el.play().catch(finish);
+        el.play().then(() => { if (onTime) tick(); }, finish);
       };
       const finish = () => {
+        cancelAnimationFrame(raf);
         el.removeEventListener('canplaythrough', onReady);
         el.removeEventListener('ended', finish);
         el.removeEventListener('error', finish);
@@ -122,7 +133,12 @@ export function useAudio() {
     });
   }, [getEl]);
 
-  const speakWithBrowserTTS = useCallback((text: string) => {
+  /**
+   * The browser's own voice, the last resort. `onChar` gets how much of `text`
+   * has been spoken: exact where the browser reports word boundaries, else
+   * estimated from a typical speaking rate.
+   */
+  const speakWithBrowserTTS = useCallback((text: string, onChar?: (chars: number) => void) => {
     settleRef.current?.();
     return new Promise<void>((resolve) => {
       if (!('speechSynthesis' in window)) {
@@ -136,6 +152,16 @@ export function useAudio() {
 
       // Simulate audio levels for browser TTS
       let interval: ReturnType<typeof setInterval> | undefined;
+      let spoken = 0;
+      let boundaries = false;
+      const report = (chars: number) => {
+        spoken = Math.max(spoken, Math.min(text.length, chars));
+        onChar?.(spoken);
+      };
+      utterance.onboundary = (e) => {
+        boundaries = true;
+        report(e.charIndex + (e.charLength || 1));
+      };
 
       const finish = () => {
         clearInterval(interval);
@@ -150,8 +176,11 @@ export function useAudio() {
       utterance.onstart = () => {
         if (settleRef.current !== finish) return;
         setIsSpeaking(true);
+        const started = performance.now();
         interval = setInterval(() => {
           setAudioLevel(0.3 + Math.random() * 0.4);
+          // ~14 characters a second at rate 1, for browsers without boundaries.
+          if (!boundaries) report(Math.floor(((performance.now() - started) / 1000) * 14));
         }, 80);
       };
       utterance.onend = finish;

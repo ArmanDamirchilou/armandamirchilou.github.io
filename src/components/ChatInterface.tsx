@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { normalize } from '../lib/captions';
 
 export interface ChatMessage {
   id: string;
@@ -7,8 +8,16 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+/** The reply being spoken, and how many of its characters have been said. */
+export interface Caption {
+  id: string;
+  chars: number;
+}
+
 interface ChatInterfaceProps {
   messages: ChatMessage[];
+  /** While set, that message shows only what the voice has said so far. */
+  caption?: Caption | null;
   isLoading: boolean;
   isSpeaking: boolean;
   onSendMessage: (text: string) => void;
@@ -26,8 +35,32 @@ const QUICK_QUESTIONS = [
   "Your goals?",
 ];
 
+/**
+ * The part of a reply the twin has said, a word per span so each new word
+ * fades in as it's spoken. Before the voice starts, the bubble shows dots.
+ */
+function SpokenText({ text, chars }: { text: string; chars: number }) {
+  const said = normalize(text).slice(0, chars).trim();
+  if (!said) {
+    return (
+      <span className="caption-waiting" aria-label="Arman is about to speak">
+        <span /><span /><span />
+      </span>
+    );
+  }
+  return (
+    <>
+      {said.split(' ').map((word, i) => (
+        <span key={i} className="caption-word">{word}{' '}</span>
+      ))}
+      <span className="caption-caret" aria-hidden />
+    </>
+  );
+}
+
 export function ChatInterface({
   messages,
+  caption,
   isLoading,
   isSpeaking,
   onSendMessage,
@@ -39,9 +72,11 @@ export function ChatInterface({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Follow the conversation, including a reply growing word by word.
+  const captionChars = caption?.chars ?? -1;
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [messages, isLoading, captionChars]);
 
   const handleSubmit = () => {
     const text = input.trim();
@@ -86,11 +121,20 @@ export function ChatInterface({
       )}
 
       <div className="chat-messages">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`message ${msg.role}`}>
-            {msg.content}
-          </div>
-        ))}
+        {messages.map((msg) => {
+          const spoken = caption && caption.id === msg.id ? caption.chars : null;
+          const live = spoken !== null;
+          return (
+            <div
+              key={msg.id}
+              className={`message ${msg.role}${live ? ' is-live' : ''}`}
+              // Screen readers get the whole reply at once, not word by word.
+              aria-label={live ? msg.content : undefined}
+            >
+              {live ? <SpokenText text={msg.content} chars={spoken} /> : msg.content}
+            </div>
+          );
+        })}
         {isLoading && (
           <div className="typing-indicator">
             <span /><span /><span />

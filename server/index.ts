@@ -4,7 +4,7 @@ import { Agent, fetch as undiciFetch } from 'undici';
 import { config } from 'dotenv';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { generateResponse } from './llm.js';
+import { activeProviders, generateResponse } from './llm.js';
 import { activeVoice, cancelSpeech, prefetchSpeech, synthesizeSpeech } from './tts.js';
 import { deliver, nextJobs, releaseWaiter, requeue } from './voiceWorker.js';
 import { loadPersonality } from './personality.js';
@@ -35,14 +35,9 @@ app.get('/api/health', async (_req, res) => {
   // the twin have a real voice right now". "voice" says which one.
   const voice = await activeVoice();
   const voiceClone: 'live' | 'down' = voice ? 'live' : 'down';
-  // Report the actual active brain: first provider key present wins, else the
-  // local knowledge-base responder.
-  let llm = 'local (knowledge base)';
-  if (process.env.OPENROUTER_API_KEY) llm = 'openrouter (free models)';
-  else if (process.env.AIML_API_KEY) llm = `aiml:${process.env.AIML_MODEL || 'gpt-4o-mini'}`;
-  else if (process.env.GROQ_API_KEY) llm = `groq:${process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'}`;
-  else if (process.env.GEMINI_API_KEY) llm = `gemini:${process.env.GEMINI_MODEL || 'gemini-2.0-flash'}`;
-  else if (process.env.OPENAI_API_KEY?.startsWith('sk-')) llm = `openai:${process.env.OPENAI_MODEL || 'gpt-4o-mini'}`;
+  // Every provider with a key, in the order they're tried; the local
+  // knowledge base answers only when all of them fail.
+  const llm = [...activeProviders(), 'local'].join(' → ');
 
   res.json({
     status: 'online',

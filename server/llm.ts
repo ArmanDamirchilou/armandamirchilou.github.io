@@ -1,4 +1,4 @@
-import { buildSystemMessage, findSampleResponse, smartLocalResponse } from './personality.js';
+import { buildSystemMessage, smartLocalResponse } from './personality.js';
 import { addToHistory, buildMessageHistory } from './memory.js';
 
 interface ChatRequest {
@@ -13,8 +13,10 @@ interface ChatResponse {
 
 type ChatMsg = { role: string; content: string };
 
-// Providers that failed this session — skipped so a dead key never re-adds latency.
-const deadProviders = new Set<string>();
+// Providers that just failed are skipped until this time, so a dead or blocked
+// key doesn't add its timeout to every message.
+const resting = new Map<string, number>();
+const PROVIDER_REST_MS = 10 * 60_000;
 
 // Replies are spoken aloud in conversation, so they should be a sentence or
 // two. This is a ceiling for the rambling cases, not the target length.
@@ -41,62 +43,61 @@ export function toSpoken(text: string): string {
 }
 
 /**
- * Provider-agnostic brain. Whichever free/paid key is present in .env wins, in
- * this order: Groq (free, no credit card, fast) → Gemini (free tier) → OpenAI.
- * If none is set or the call fails, it answers from the local knowledge base
- * (smartLocalResponse) so the twin is never mute or stuck on a canned line.
+ * Provider-agnostic brain. Every question goes to a real model, so asking the
+ * same thing twice gets a fresh answer, not a stored one. Providers are tried
+ * in order until one answers: OpenRouter (free models, reachable from Iran) →
+ * Groq → Gemini → AIML → OpenAI, whichever have keys in .env. Only when all of
+ * them fail does the local knowledge base (smartLocalResponse) answer, so the
+ * twin is never mute.
  */
 export async function generateResponse(req: ChatRequest): Promise<ChatResponse> {
   const { message, sessionId } = req;
 
   addToHistory(sessionId, 'user', message);
-
-  // Exact/near-exact hand-written answers win instantly (no API call).
-  const sampleResponse = findSampleResponse(message);
-  if (sampleResponse) {
-    addToHistory(sessionId, 'assistant', sampleResponse);
-    return { text: sampleResponse };
-  }
-
   const systemMessage = buildSystemMessage();
   const history = buildMessageHistory(sessionId);
 
-  // Pick the active provider (first key present wins). Skip any provider that
-  // already failed this session — a dead/blocked key is tried once, then never
-  // again, so it can't add latency to every message.
-  const provider = process.env.OPENROUTER_API_KEY
-    ? 'openrouter'
-    : process.env.AIML_API_KEY
-      ? 'aiml'
-      : process.env.GROQ_API_KEY
-        ? 'groq'
-        : process.env.GEMINI_API_KEY
-          ? 'gemini'
-          : process.env.OPENAI_API_KEY?.startsWith('sk-')
-            ? 'openai'
-            : null;
-
   let text: string | null = null;
-  if (provider && !deadProviders.has(provider)) {
+  for (const provider of activeProviders()) {
     try {
-      if (provider === 'openrouter') text = await callOpenRouter(systemMessage, history);
-      else if (provider === 'aiml') text = await callAIML(systemMessage, history);
-      else if (provider === 'groq') text = await callGroq(systemMessage, history);
-      else if (provider === 'gemini') text = await callGemini(systemMessage, history);
-      else text = await callOpenAI(systemMessage, history);
-      // OpenRouter free models rate-limit temporarily — never permanently
-      // disable it; just fall to the local brain for that one message.
-      if (!text && provider !== 'openrouter') deadProviders.add(provider);
+      text = await PROVIDERS[provider](systemMessage, history);
     } catch (err) {
       console.error(`[LLM] ${provider} error:`, err);
-      if (provider !== 'openrouter') deadProviders.add(provider);
       text = null;
     }
+    if (text && toSpoken(text)) break;
+    // OpenRouter cools its models down one by one (see callOpenRouter), so
+    // only the other providers are rested as a whole.
+    if (provider !== 'openrouter') resting.set(provider, Date.now() + PROVIDER_REST_MS);
+    console.error(`[LLM] ${provider} gave no answer, trying the next provider`);
   }
 
   const finalText = toSpoken(text ?? '') || smartLocalResponse(message);
+  if (!text) console.error('[LLM] every provider failed, answering from the local brain');
   addToHistory(sessionId, 'assistant', finalText);
   return { text: finalText };
+}
+
+type Provider = 'openrouter' | 'groq' | 'gemini' | 'aiml' | 'openai';
+
+const PROVIDERS: Record<Provider, (system: string, history: ChatMsg[]) => Promise<string | null>> = {
+  openrouter: (s, h) => callOpenRouter(s, h),
+  groq: (s, h) => callGroq(s, h),
+  gemini: (s, h) => callGemini(s, h),
+  aiml: (s, h) => callAIML(s, h),
+  openai: (s, h) => callOpenAI(s, h),
+};
+
+/** Providers with a key, in the order they're tried. */
+export function activeProviders(): Provider[] {
+  const keyed: [Provider, boolean][] = [
+    ['openrouter', !!process.env.OPENROUTER_API_KEY],
+    ['groq', !!process.env.GROQ_API_KEY],
+    ['gemini', !!process.env.GEMINI_API_KEY],
+    ['aiml', !!process.env.AIML_API_KEY],
+    ['openai', !!process.env.OPENAI_API_KEY?.startsWith('sk-')],
+  ];
+  return keyed.filter(([p, has]) => has && (resting.get(p) ?? 0) <= Date.now()).map(([p]) => p);
 }
 
 // ── OpenRouter (aggregator; FREE models, reachable where OpenAI isn't) ────────
@@ -240,7 +241,7 @@ async function callAIML(system: string, history: ChatMsg[]): Promise<string | nu
       max_tokens: MAX_REPLY_TOKENS,
       temperature: 0.85,
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) {
     console.error(`[LLM] AIML ${res.status}:`, (await res.text()).slice(0, 200));
@@ -265,7 +266,7 @@ async function callGroq(system: string, history: ChatMsg[]): Promise<string | nu
       max_tokens: MAX_REPLY_TOKENS,
       temperature: 0.85,
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) {
     console.error(`[LLM] Groq ${res.status}:`, (await res.text()).slice(0, 160));
@@ -292,7 +293,7 @@ async function callGemini(system: string, history: ChatMsg[]): Promise<string | 
         contents,
         generationConfig: { maxOutputTokens: MAX_REPLY_TOKENS, temperature: 0.85 },
       }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(15000),
     }
   );
   if (!res.ok) {
@@ -318,7 +319,7 @@ async function callOpenAI(system: string, history: ChatMsg[]): Promise<string | 
       max_tokens: MAX_REPLY_TOKENS,
       temperature: 0.85,
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) {
     console.error(`[LLM] OpenAI ${res.status}:`, (await res.text()).slice(0, 160));

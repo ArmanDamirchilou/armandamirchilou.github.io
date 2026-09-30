@@ -9,7 +9,8 @@ interface ChatResponseData {
 }
 
 interface UseChatOptions {
-  onResponse: (data: ChatResponseData) => void;
+  /** The reply, with the id of its chat message (so it can be captioned). */
+  onResponse: (data: ChatResponseData & { id: string }) => void;
 }
 
 export const isLocalHost = () =>
@@ -92,7 +93,7 @@ export function useChat({ onResponse }: UseChatOptions) {
       };
 
       setMessages(prev => [...prev, assistantMsg]);
-      onResponse(data);
+      onResponse({ ...data, id: assistantMsg.id });
     } catch (err: any) {
       if (err.name === 'AbortError') return;
 

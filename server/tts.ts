@@ -15,10 +15,12 @@ const XTTS_URL = 'http://127.0.0.1:5050';
 const CHATTERBOX_URL = 'http://127.0.0.1:5060';
 const VOICEBOX_URL = 'http://127.0.0.1:17493';
 const KOKORO_URL = 'http://127.0.0.1:5070';
+const POCKET_URL = 'http://127.0.0.1:5080';
 
 // Local voice server behind each mode, for the health check's "voice" field.
 const VOICE_SERVERS: Record<string, string> = {
   kokoro: KOKORO_URL,
+  pocket: POCKET_URL,
   chatterbox: CHATTERBOX_URL,
   clone: XTTS_URL,
 };
@@ -44,6 +46,10 @@ export async function activeVoice(): Promise<'clone' | 'standard' | null> {
     if (workerAlive()) return 'clone';
     return (await serverReady(KOKORO_URL)) ? 'standard' : null;
   }
+  if (mode === 'pocket') {
+    if (await serverReady(POCKET_URL)) return 'clone';
+    return (await serverReady(KOKORO_URL)) ? 'standard' : null;
+  }
   const base = VOICE_SERVERS[mode];
   if (!base) return null;
   return (await serverReady(base)) ? (mode === 'kokoro' ? 'standard' : 'clone') : null;
@@ -60,13 +66,20 @@ async function synthesizeRemoteClone(text: string, requestId: string, group?: st
   }
   const audioDir = join(process.cwd(), 'public', 'audio');
   if (!existsSync(audioDir)) mkdirSync(audioDir, { recursive: true });
-  // The worker sends AAC (an MP4 box: "ftyp" at byte 4) when it can, WAV
-  // otherwise; the extension decides the Content-Type the clip is served with.
-  const ext = wav.subarray(4, 8).toString('latin1') === 'ftyp' ? 'm4a' : 'wav';
-  const filename = `speech_${requestId}.${ext}`;
+  const filename = `speech_${requestId}.${clipExt(wav)}`;
   writeFileSync(join(audioDir, filename), wav);
   console.log(`[TTS] Clone (worker): ${filename} ${wav.length}B in ${Date.now() - started}ms`);
   return { audioUrl: `/audio/${filename}`, useBrowserTTS: false };
+}
+
+/**
+ * Voice servers answer with AAC, MP3 or WAV; the file extension decides the
+ * Content-Type the clip is served with, so it has to match the bytes.
+ */
+export function clipExt(audio: Buffer): 'm4a' | 'mp3' | 'wav' {
+  if (audio.subarray(4, 8).toString('latin1') === 'ftyp') return 'm4a';
+  if (audio.subarray(0, 3).toString('latin1') === 'ID3' || (audio[0] === 0xff && (audio[1] & 0xe0) === 0xe0)) return 'mp3';
+  return 'wav';
 }
 
 // Clips are fetched once, right after synthesis, so anything older than this
@@ -93,21 +106,42 @@ const prefetched = new Map<string, { clip: Promise<TTSResult>; at: number; group
 const PREFETCH_TTL_MS = 2 * 60 * 1000;
 const key = (group: string, text: string) => `${group}\u0000${text}`;
 
+// Bumped whenever a visitor interrupts, so a queued sentence can tell that
+// nobody is waiting for it any more.
+const runs = new Map<string, number>();
+
 /**
  * Starts voicing a reply the moment it exists, sentence by sentence, instead
- * of waiting for the page to request each one. Only worth it for the remote
- * clone, where every clip pays a slow round trip to the worker: by the time
- * the page asks for sentence two, it is usually already here. The page splits
- * with the same splitForSpeech, so its requests match these keys exactly.
+ * of waiting for the page to request each one: by the time the page asks for
+ * sentence two it is usually ready, which saves a round trip per sentence.
+ * The page splits with the same splitForSpeech, so its requests match these
+ * keys exactly.
+ *
+ * The remote clone takes the whole reply at once (the worker batches it). A
+ * local engine runs one clip at a time, so sentences are queued in order:
+ * fired together they'd race for the engine and the first one, the one the
+ * visitor is waiting on, could come out last.
  */
 export function prefetchSpeech(text: string, group: string) {
-  if ((process.env.TTS_MODE || 'edge') !== 'clone-remote' || !workerAlive()) return;
+  const mode = process.env.TTS_MODE || 'edge';
+  const remote = mode === 'clone-remote' && workerAlive();
+  if (!remote && mode !== 'pocket') return;
   const now = Date.now();
   for (const [k, entry] of prefetched) if (now - entry.at > PREFETCH_TTL_MS) prefetched.delete(k);
+  if (runs.size > 10_000) runs.clear();
+  const run = (runs.get(group) ?? 0) + 1;
+  runs.set(group, run);
+  let previous: Promise<unknown> = Promise.resolve();
   for (const chunk of splitForSpeech(text)) {
     if (prefetched.has(key(group, chunk))) continue;
-    const clip = synthesizeFresh(chunk, randomUUID(), group);
+    const clip = remote
+      ? synthesizeFresh(chunk, randomUUID(), group)
+      : previous.then((): Promise<TTSResult> =>
+          runs.get(group) === run
+            ? synthesizeFresh(chunk, randomUUID(), group)
+            : Promise.resolve({ audioUrl: null, useBrowserTTS: false, cancelled: true }));
     clip.catch(() => {});
+    previous = clip.catch(() => {});
     prefetched.set(key(group, chunk), { clip, at: now, group });
   }
 }
@@ -115,6 +149,7 @@ export function prefetchSpeech(text: string, group: string) {
 /** The visitor interrupted: stop preparing anything they haven't heard yet. */
 export function cancelSpeech(group: string) {
   for (const [k, entry] of prefetched) if (entry.group === group) prefetched.delete(k);
+  runs.set(group, (runs.get(group) ?? 0) + 1);
   cancelGroup(group);
 }
 
@@ -138,8 +173,15 @@ async function synthesizeFresh(text: string, requestId: string, group?: string):
     if (c.audioUrl || c.cancelled) return c;
   }
 
+  // Arman's voice cloned by Pocket TTS on this host (:5080) → Kokoro → Edge
+  if (mode === 'pocket') {
+    const p = await synthesizeClone(text, requestId, POCKET_URL, 'Pocket');
+    if (p.audioUrl) return p;
+    console.log('[TTS] Pocket unavailable, falling back to Kokoro');
+  }
+
   // Kokoro (:5070) — fast CPU voice for hosts without a GPU → Edge fallback
-  if (mode === 'kokoro' || mode === 'clone-remote') {
+  if (mode === 'kokoro' || mode === 'clone-remote' || mode === 'pocket') {
     const k = await synthesizeClone(text, requestId, KOKORO_URL, 'Kokoro');
     if (k.audioUrl) return k;
     console.log('[TTS] Kokoro unavailable, falling back to Edge TTS');
@@ -296,7 +338,7 @@ async function synthesizeClone(
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
-    const filename = `speech_${requestId}.wav`;
+    const filename = `speech_${requestId}.${clipExt(buffer)}`;
     writeFileSync(join(audioDir, filename), buffer);
 
     console.log(`[TTS] ${label}: ${filename}`);

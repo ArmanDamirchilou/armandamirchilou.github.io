@@ -87,7 +87,6 @@ test.describe('digital twin', () => {
 
     await input.fill('Who are you?');
     await input.press('Enter');
-    await expect(page.locator('.message.assistant')).toHaveText(REPLY);
     await expect(status(page)).toContainText('Speaking');
 
     // First clip is a single short sentence so the voice starts quickly.
@@ -95,6 +94,8 @@ test.describe('digital twin', () => {
 
     await page.getByRole('button', { name: /stop talking/i }).click();
     await expect(status(page)).toContainText('Listening');
+    // Cut off mid-reply, the whole answer is still there to read.
+    await expect(page.locator('.message.assistant')).toHaveText(REPLY);
     await expect(page.getByRole('button', { name: /stop talking/i })).toBeHidden();
     const after = mock.speaks.length;
     await page.waitForTimeout(3000);
@@ -110,6 +111,28 @@ test.describe('digital twin', () => {
     await expect(status(page)).toContainText('Speaking');
     await expect(status(page)).toContainText('Listening', { timeout: 20000 });
     expect(mock.speaks.join(' ')).toBe(REPLY);
+    await expect(page.locator('.message.assistant')).toHaveText(REPLY);
+  });
+
+  test('writes the reply into the chat in step with the voice', async ({ page }) => {
+    await mockBackend(page);
+    const input = await openTwin(page);
+    await input.fill('Who are you?');
+    await input.press('Enter');
+    const reply = page.locator('.message.assistant');
+
+    // Nothing is shown before the voice starts, then the first sentence's
+    // words arrive while it plays, and later sentences wait for their clip.
+    await expect(reply.locator('.caption-waiting')).toBeVisible();
+    await expect(reply).toContainText('Hey!');
+    const early = (await reply.innerText()).trim();
+    expect(early.length).toBeLessThan(REPLY.length);
+    expect(early).not.toContain('projects');
+    await expect(reply.locator('.caption-word').first()).toBeVisible();
+
+    await expect(status(page)).toContainText('Listening', { timeout: 20000 });
+    await expect(reply).toHaveText(REPLY);
+    await expect(reply.locator('.caption-caret')).toHaveCount(0);
   });
 
   test('Esc interrupts the reply', async ({ page }) => {
