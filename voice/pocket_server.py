@@ -36,10 +36,17 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PORT = int(os.environ.get("POCKET_PORT", "5080"))
-REF_WAV = os.environ.get("POCKET_REF_WAV", os.path.join(HERE, "arman_ref_chatterbox.wav"))
-# Extracting the voice from the WAV takes a second; the result is cached here
-# and reused until the reference recording changes.
-STATE_CACHE = os.path.expanduser(os.environ.get("POCKET_STATE_CACHE", "~/.cache/arman-voice/pocket_voice.safetensors"))
+# The clone copies the reference's delivery as well as its timbre. Measured
+# on the sandbox (voice similarity to Arman, pitch movement): the full 45 s
+# sample, cut to its first 30 s, beats the 13 s clip on both (0.87 vs 0.84,
+# 1.45 vs 1.24 semitones). Both are read aloud, so a natural, conversational
+# recording is what would make the voice truly lively.
+REF_WAV = os.environ.get("POCKET_REF_WAV", os.path.join(HERE, "arman_voice_sample.wav"))
+# Extracting the voice from the WAV takes a second; the result is cached per
+# reference file and reused until that file changes.
+STATE_CACHE = os.path.expanduser(
+    os.environ.get("POCKET_STATE_CACHE", f"~/.cache/arman-voice/pocket_{os.path.splitext(os.path.basename(REF_WAV))[0]}.safetensors")
+)
 TEMP = float(os.environ.get("POCKET_TEMP", "0.3"))
 
 
@@ -55,7 +62,7 @@ def load_voice():
     try:
         if os.path.exists(STATE_CACHE) and os.path.getmtime(STATE_CACHE) > os.path.getmtime(REF_WAV):
             return model.get_state_for_audio_prompt(STATE_CACHE)
-        state = model.get_state_for_audio_prompt(REF_WAV)
+        state = model.get_state_for_audio_prompt(REF_WAV, truncate=True)
         try:
             from pocket_tts import export_model_state
 
