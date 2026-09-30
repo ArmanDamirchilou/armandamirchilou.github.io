@@ -215,17 +215,6 @@ export function Twin() {
 
   const { messages, isLoading, sendMessage } = useChat({ onResponse: handleResponse });
 
-  // Phones show what the twin is saying over its face, like live captions on
-  // a call: the latest few words, each keyed by its place in the reply so
-  // only new ones animate in.
-  const liveWords = (() => {
-    if (!caption || !caption.chars) return null;
-    const msg = messages.find((m) => m.id === caption.id);
-    if (!msg) return null;
-    const words = normalize(stripLinks(msg.content)).slice(0, caption.chars).trim().split(' ');
-    const from = Math.max(0, words.length - 14);
-    return words.slice(from).map((w, i) => ({ w, key: from + i }));
-  })();
 
   const handleSendMessage = useCallback(
     async (text: string) => {
@@ -389,14 +378,6 @@ export function Twin() {
           </div>
 
           <VolumeControl volume={volume} onChange={setVolume} />
-
-          {liveWords && (
-            <p className="twin-live-caption" aria-hidden>
-              {liveWords.map(({ w, key }) => (
-                <span key={key} className="caption-word">{w} </span>
-              ))}
-            </p>
-          )}
 
           <div className={`twin-status ${status}`}>
             <span className="twin-status-dot" />
