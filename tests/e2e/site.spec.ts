@@ -151,10 +151,10 @@ test.describe('other pages', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the classic site is still available', async ({ page }) => {
+  test('the old site is gone', async ({ page }) => {
     await page.goto('/classic');
-    await expect(page.locator('h1')).toContainText("I'm");
-    await expect(page.locator('h1')).toContainText('Arman');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nothing here.');
+    await expect(page.getByRole('link', { name: /classic site/i })).toHaveCount(0);
   });
 
   test('unknown routes show a 404 page instead of a blank screen', async ({ page }) => {

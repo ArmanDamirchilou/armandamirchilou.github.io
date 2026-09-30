@@ -4,7 +4,7 @@
    chat sheet, pills, input) floats above it as a pane of glass. When the
    twin speaks, a glow runs round the stage's edge and swells with the voice.
 
-   Layered over the classic twin styles, which keep the layout and behaviour.
+   Layered over the twin's base styles in global.css (layout and behaviour).
    ───────────────────────────────────────────────────────────────────────────── */
 
 .twin-page.is-dark {

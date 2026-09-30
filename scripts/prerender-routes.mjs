@@ -25,12 +25,6 @@ const ROUTES = [
     description:
       'Get in touch with Arman Damirchilou for AI, machine learning and full-stack engineering work. Based in Tehran, Iran, working with teams worldwide.',
   },
-  {
-    path: 'classic',
-    title: 'Arman Damirchilou — the classic site',
-    description:
-      'The previous design of Arman Damirchilou\'s portfolio: AI projects, competition medals and his digital twin.',
-  },
 ];
 
 const shell = readFileSync(join(DIST, 'index.html'), 'utf8');

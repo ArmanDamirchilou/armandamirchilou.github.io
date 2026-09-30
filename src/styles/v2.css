@@ -1,10 +1,9 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    Homepage v2. Dark graphite, bone text, one accent (pomegranate). Everything
-   is scoped under .v2 so the classic stylesheet can keep serving /classic and
-   the twin page untouched.
+   is scoped under .v2 so it can't leak into the twin page.
    ───────────────────────────────────────────────────────────────────────────── */
 
-/* The classic stylesheet sets overflow-x:hidden on html/body, which turns body
+/* global.css sets overflow-x:hidden on html/body, which turns body
    into a scroll container and silently breaks position:sticky (the hero and the
    stacked cards). clip trims the same overflow without that side effect. The
    dark ground also stops white flashing through on overscroll. */

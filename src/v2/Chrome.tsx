@@ -176,7 +176,6 @@ export function V2Footer() {
       </div>
       <div className="v2-footer-row v2-footer-fine">
         <span>Designed and built by Arman Damirchilou.</span>
-        <Link to="/classic">See the classic site</Link>
       </div>
     </footer>
   );

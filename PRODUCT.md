@@ -20,7 +20,6 @@ University admissions first, then research labs, collaborators, press. Desktop f
 - `/`: v2 homepage (`src/pages/HomeV2.tsx`, styles `src/styles/v2.css`, content `src/v2/content.ts`).
 - `/twin`: full-screen AI twin, 3D avatar + chat, in the same dark theme (`src/styles/twin-v2.css`). Voice via the backend's TTS (Kokoro on CPU hosts), spoken sentence by sentence; Stop button, Esc, mic or a new message interrupt it.
 - `/contact`: mailto form + channels.
-- `/classic`: the previous neo-brutalist homepage, kept live on purpose (also tagged `classic-v1`, branch `classic-site`).
 - anything else: 404 page.
 
 ## Tech

@@ -6,9 +6,7 @@ import { HomeV2 } from './pages/HomeV2';
 // so the homepage stays light.
 const Twin = lazy(() => import('./pages/Twin').then((m) => ({ default: m.Twin })));
 const Contact = lazy(() => import('./pages/Contact').then((m) => ({ default: m.Contact })));
-// The previous homepage, kept live because it's still liked.
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
-const ClassicHome = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
 
 function PageLoader() {
   return (
@@ -24,7 +22,6 @@ export function App() {
   return (
     <Routes>
       <Route path="/" element={<HomeV2 />} />
-      <Route path="/classic" element={lazyRoute(<ClassicHome />)} />
       <Route path="/twin" element={lazyRoute(<Twin />)} />
       <Route path="/contact" element={lazyRoute(<Contact />)} />
       <Route path="*" element={lazyRoute(<NotFound />)} />
