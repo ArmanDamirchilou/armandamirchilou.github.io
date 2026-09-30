@@ -36,6 +36,10 @@ export function toSpoken(text: string): string {
     .replace(/^\s{0,3}#{1,6}\s+/gm, '')
     .replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, '')
     .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, '')
+    // Typographic hyphens and quotes that voice engines may stumble on.
+    .replace(/[\u2010\u2011\u2012]/g, '-')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
     .replace(/\s*\n+\s*/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.!?;:])/g, '$1')
@@ -45,8 +49,8 @@ export function toSpoken(text: string): string {
 /**
  * Provider-agnostic brain. Every question goes to a real model, so asking the
  * same thing twice gets a fresh answer, not a stored one. Providers are tried
- * in order until one answers: OpenRouter (free models, reachable from Iran) →
- * Groq → Gemini → AIML → OpenAI, whichever have keys in .env. Only when all of
+ * in order until one answers: Groq → OpenRouter (free models) → Gemini →
+ * AIML → OpenAI, whichever have keys in .env. Only when all of
  * them fail does the local knowledge base (smartLocalResponse) answer, so the
  * twin is never mute.
  */
@@ -54,7 +58,7 @@ export async function generateResponse(req: ChatRequest): Promise<ChatResponse> 
   const { message, sessionId } = req;
 
   addToHistory(sessionId, 'user', message);
-  const systemMessage = buildSystemMessage();
+  const systemMessage = buildSystemMessage(message);
   const history = buildMessageHistory(sessionId);
 
   let text: string | null = null;
@@ -90,9 +94,11 @@ const PROVIDERS: Record<Provider, (system: string, history: ChatMsg[]) => Promis
 
 /** Providers with a key, in the order they're tried. */
 export function activeProviders(): Provider[] {
+  // Groq first: fast, and its free quota is far larger than OpenRouter's 50
+  // free-model requests a day, which a busy afternoon uses up.
   const keyed: [Provider, boolean][] = [
-    ['openrouter', !!process.env.OPENROUTER_API_KEY],
     ['groq', !!process.env.GROQ_API_KEY],
+    ['openrouter', !!process.env.OPENROUTER_API_KEY],
     ['gemini', !!process.env.GEMINI_API_KEY],
     ['aiml', !!process.env.AIML_API_KEY],
     ['openai', !!process.env.OPENAI_API_KEY?.startsWith('sk-')],
@@ -253,7 +259,10 @@ async function callAIML(system: string, history: ChatMsg[]): Promise<string | nu
 
 // ── Groq (OpenAI-compatible; free, no credit card) ──────────────────────────
 async function callGroq(system: string, history: ChatMsg[]): Promise<string | null> {
-  const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  // gpt-oss thinks before it answers; kept brief and out of the reply, it
+  // still answers in well under a second on Groq.
+  const model = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+  const thinking = model.includes('gpt-oss');
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -263,8 +272,10 @@ async function callGroq(system: string, history: ChatMsg[]): Promise<string | nu
     body: JSON.stringify({
       model,
       messages: [{ role: 'system', content: system }, ...history],
-      max_tokens: MAX_REPLY_TOKENS,
-      temperature: 0.85,
+      // The thinking tokens count against the limit too, so leave room for them.
+      max_completion_tokens: MAX_REPLY_TOKENS + (thinking ? 400 : 0),
+      temperature: 1,
+      ...(thinking ? { reasoning_effort: 'low', include_reasoning: false } : {}),
     }),
     signal: AbortSignal.timeout(15000),
   });
@@ -273,7 +284,11 @@ async function callGroq(system: string, history: ChatMsg[]): Promise<string | nu
     return null;
   }
   const data = (await res.json()) as any;
-  return data.choices?.[0]?.message?.content ?? null;
+  const choice = data.choices?.[0];
+  let text: string | undefined = choice?.message?.content;
+  if (text && (isModerationVerdict(text) || isLeakedReasoning(text))) return null;
+  if (text && choice?.finish_reason === 'length') text = trimToLastSentence(text);
+  return text?.trim() || null;
 }
 
 // ── Google Gemini (free tier) ───────────────────────────────────────────────

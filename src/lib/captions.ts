@@ -75,57 +75,74 @@ function pauseWeight(w: string): number {
 export function wordStarts(words: string[], span: SpeechSpan | null, duration: number): number[] {
   if (!words.length) return [];
   const s: SpeechSpan = span ?? { start: 0, end: Math.max(duration, 0.01), pauses: [] };
-  const w = words.map(wordWeight);
-  const p = words.map(pauseWeight);
 
-  // Pin each real pause to the punctuation break nearest to where it would
-  // fall if the rest of the speech, from the previous pause on, were even. A
-  // pause with no break near it (a breath mid-phrase) is left alone: it's
-  // shared out with the words around it.
-  const anchors: { word: number; start: number; end: number }[] = [];
-  let after = -1;
-  let from = s.start;
-  for (const pause of s.pauses) {
-    const expected: number[] = [];
-    const units = (i: number) => w[i] + (i < words.length - 1 ? p[i] : 0);
-    let rest = 0;
-    for (let i = after + 1; i < words.length; i++) rest += units(i);
-    let acc = 0;
-    for (let i = after + 1; i < words.length; i++) {
-      acc += w[i];
-      expected[i] = from + (acc / rest) * (s.end - from);
-      acc += units(i) - w[i];
-    }
+  // Timing works on parts: a word with a dash inside ("twin—3D") is said as
+  // two, often with a pause between, so the dash is a place to pause too.
+  const parts: { word: number; text: string }[] = [];
+  words.forEach((word, i) => {
+    for (const text of word.split(/(?<=[—–])(?=.)/)) parts.push({ word: i, text });
+  });
+  const n = parts.length;
+  const w = parts.map((pt) => wordWeight(pt.text));
+  const p = parts.map((pt, i) => (i < n - 1 ? pauseWeight(pt.text) : 0));
+
+  // Real pauses are pinned to punctuation, longest first: a long silence is
+  // almost always a full stop or a dash, while a short one may be a breath.
+  // Each is matched to the break nearest to where it would fall if speech
+  // were even between the pauses already pinned either side of it, and only
+  // if it's close; an unmatched pause is shared out with the words around it.
+  const anchors: { part: number; start: number; end: number }[] = [];
+  const byLength = [...s.pauses].sort((a, b) => b.end - b.start - (a.end - a.start));
+  for (const pause of byLength) {
+    const left = anchors.filter((a) => a.end <= pause.start).pop();
+    const right = anchors.find((a) => a.start >= pause.end);
+    const lo = left ? left.part + 1 : 0;
+    const hi = right ? right.part : n - 1;
+    const t0 = left ? left.end : s.start;
+    const t1 = right ? right.start : s.end;
+    let units = 0;
+    for (let i = lo; i <= hi; i++) units += w[i] + (i < hi ? p[i] : 0);
     const mid = (pause.start + pause.end) / 2;
     let best = -1;
-    for (let i = after + 1; i < words.length - 1; i++) {
-      if (!p[i]) continue;
-      if (best < 0 || Math.abs(expected[i] - mid) < Math.abs(expected[best] - mid)) best = i;
+    let bestDiff = Infinity;
+    let acc = 0;
+    for (let i = lo; i < hi; i++) {
+      acc += w[i];
+      const expected = t0 + (acc / units) * (t1 - t0);
+      if (p[i] && Math.abs(expected - mid) < bestDiff) {
+        best = i;
+        bestDiff = Math.abs(expected - mid);
+      }
+      acc += p[i];
     }
-    if (best >= 0 && Math.abs(expected[best] - mid) < (s.end - from) * 0.25 + 0.2) {
-      anchors.push({ word: best, start: pause.start, end: pause.end });
-      after = best;
-      from = pause.end;
+    if (best >= 0 && bestDiff < (t1 - t0) * 0.2 + 0.15) {
+      anchors.push({ part: best, start: pause.start, end: pause.end });
+      anchors.sort((a, b) => a.part - b.part);
     }
   }
-  anchors.push({ word: words.length - 1, start: s.end, end: s.end });
+  anchors.push({ part: n - 1, start: s.end, end: s.end });
 
   // Within each stretch between pauses, time follows word length.
-  const starts: number[] = [];
+  const partStarts: number[] = [];
   let first = 0;
   let t0 = s.start;
   for (const a of anchors) {
-    const idx = [];
-    for (let i = first; i <= a.word; i++) idx.push(i);
-    const units = idx.reduce((sum, i) => sum + w[i] + (i < a.word ? p[i] : 0), 0);
+    let units = 0;
+    for (let i = first; i <= a.part; i++) units += w[i] + (i < a.part ? p[i] : 0);
     let u = 0;
-    for (const i of idx) {
-      starts[i] = t0 + (u / units) * (a.start - t0);
-      u += w[i] + (i < a.word ? p[i] : 0);
+    for (let i = first; i <= a.part; i++) {
+      partStarts[i] = t0 + (u / units) * (a.start - t0);
+      u += w[i] + (i < a.part ? p[i] : 0);
     }
-    first = a.word + 1;
+    first = a.part + 1;
     t0 = a.end;
   }
+
+  // A word starts when its first part does.
+  const starts: number[] = [];
+  parts.forEach((pt, i) => {
+    if (starts[pt.word] === undefined) starts[pt.word] = partStarts[i];
+  });
   return starts;
 }
 

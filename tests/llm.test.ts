@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { isLeakedReasoning, isModerationVerdict, toSpoken, trimToLastSentence } from '../server/llm';
 
 describe('toSpoken', () => {
+  it('turns typographic hyphens and quotes into plain ones the voice reads cleanly', () => {
+    expect(toSpoken('a sixteen\u2011year\u2011old dev, what\u2019s up? \u201Chi\u201D')).toBe(`a sixteen-year-old dev, what's up? "hi"`);
+  });
+
   it('strips markdown the TTS would read out literally', () => {
     expect(toSpoken('I won **gold** at *Innoverse*.')).toBe('I won gold at Innoverse.');
     expect(toSpoken('## Projects\n- Traffic AI\n- Water AI')).toBe('Projects Traffic AI Water AI');

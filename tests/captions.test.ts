@@ -51,6 +51,18 @@ describe('wordStarts', () => {
     expect([...starts].sort((a, b) => a - b)).toEqual(starts);
   });
 
+  it("doesn't pin a short breath to an early comma when the long pause is at a dash", () => {
+    // Measured from a real Pocket TTS clip of this line: a breath at 1.44s,
+    // and the real pause, at the dash after "twin", from 2.54s to 3.21s.
+    const words = 'Honestly, building this digital twin—3D model,'.split(' ');
+    const span = { start: 0.04, end: 4.27, pauses: [{ start: 1.44, end: 1.56 }, { start: 2.54, end: 3.21 }] };
+    const starts = wordStarts(words, span, 4.54);
+    expect(starts[1]).toBeLessThan(1.2); // "building" follows "Honestly," closely
+    // "twin—3D" starts before the dash pause and "model," after it.
+    expect(starts[4]).toBeLessThan(2.54);
+    expect(starts[5]).toBeGreaterThan(3.21);
+  });
+
   it('spreads words over the whole clip when the audio could not be analysed', () => {
     const starts = wordStarts(['one', 'two', 'three', 'four'], null, 2);
     expect(starts[0]).toBe(0);

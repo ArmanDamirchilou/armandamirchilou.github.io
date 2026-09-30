@@ -2,7 +2,7 @@
 Pocket TTS server - Arman's cloned voice on a plain CPU.
 
 Kyutai's Pocket TTS (100M params, 2026) clones a voice from a few seconds of
-audio and runs ~3x faster than real time on the Daytona sandbox's 4 cores, so
+audio and runs ~3x faster than real time on one of the Daytona sandbox's cores, so
 unlike Chatterbox it doesn't need a GPU or the Mac worker: the twin keeps
 speaking in Arman's voice around the clock.
 
@@ -33,7 +33,6 @@ import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
-import torch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PORT = int(os.environ.get("POCKET_PORT", "5080"))
@@ -44,23 +43,9 @@ STATE_CACHE = os.path.expanduser(os.environ.get("POCKET_STATE_CACHE", "~/.cache/
 TEMP = float(os.environ.get("POCKET_TEMP", "0.3"))
 
 
-def cpu_quota() -> int:
-    """
-    Cores we may actually use. The sandbox reports 48 cores but its cgroup
-    allows 4; a thread per reported core gets throttled into a crawl.
-    """
-    try:
-        quota, period = open("/sys/fs/cgroup/cpu.max").read().split()
-        if quota != "max":
-            return max(1, int(int(quota) / int(period)))
-    except (OSError, ValueError):
-        pass
-    return os.cpu_count() or 1
-
-
-torch.set_num_threads(cpu_quota())
-
-from pocket_tts import TTSModel  # noqa: E402  (after set_num_threads)
+# Pocket TTS pins torch to one thread on import: the model is small enough
+# that more threads only add overhead (~3x faster than real time on one core).
+from pocket_tts import TTSModel  # noqa: E402
 
 model = TTSModel.load_model(temp=TEMP)
 
@@ -173,7 +158,7 @@ if __name__ == "__main__":
     if voice is not None:
         t0 = time.time()
         synthesize("Warming up.")
-        print(f"[Pocket] ready on :{PORT} with {torch.get_num_threads()} threads ({time.time() - t0:.1f}s warm-up)", flush=True)
+        print(f"[Pocket] ready on :{PORT} ({time.time() - t0:.1f}s warm-up)", flush=True)
     else:
         print(f"[Pocket] listening on :{PORT} without a cloned voice; the backend will use its fallback", flush=True)
     ThreadingHTTPServer(("127.0.0.1", PORT), VoiceHandler).serve_forever()

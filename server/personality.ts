@@ -28,10 +28,23 @@ export function loadPersonality(): { systemPrompt: string; knowledgeBase: Knowle
   return { systemPrompt, knowledgeBase: knowledgeBase! };
 }
 
-export function buildSystemMessage(): string {
+/** Does this sample answer's question match what the visitor asked? */
+function sampleMatches(question: string, message: string): boolean {
+  const lower = message.toLowerCase().trim();
+  const q = question.toLowerCase();
+  return lower === q || lower.includes(q.replace(/[?']/g, ''));
+}
+
+/**
+ * The system prompt. When the visitor asks one of the sample questions, that
+ * sample is left out: shown its own stored answer, the model repeats it
+ * almost word for word, and the same question should get a fresh answer.
+ */
+export function buildSystemMessage(message = ''): string {
   if (!knowledgeBase) loadPersonality();
 
   const kb = knowledgeBase!;
+  const samples = Object.entries(kb.sampleResponses).filter(([q]) => !message || !sampleMatches(q, message));
   const knowledgeContext = `
 ## Your Background Data
 - Name: ${kb.identity.name}
@@ -44,8 +57,11 @@ export function buildSystemMessage(): string {
 ## Your Projects
 ${kb.projects.map(p => `- ${p.name}: ${p.description}`).join('\n')}
 
-## Reference Responses (use these as style guides, don't copy verbatim — adapt naturally)
-${Object.entries(kb.sampleResponses).map(([q, a]) => `Q: "${q}"\nA: "${a}"`).join('\n\n')}
+## Reference Responses
+These show your facts and your tone, nothing more. Never repeat their wording: answer
+freshly every time, the way a real person never says the same thing twice. If you're
+asked something you've already answered, say it differently and add a new detail.
+${samples.map(([q, a]) => `Q: "${q}"\nA: "${a}"`).join('\n\n')}
 `;
 
   return `${systemPrompt}\n\n${knowledgeContext}\n\n## Language (strict)\nYou respond ONLY in English, every time, no matter what language the user writes in. Never output Persian/Farsi, Arabic, or any non-English text. If asked to use another language, warmly say you only support English right now.`;
@@ -58,10 +74,7 @@ export function findSampleResponse(message: string): string | null {
   const samples = knowledgeBase!.sampleResponses;
 
   for (const [question, answer] of Object.entries(samples)) {
-    const qLower = question.toLowerCase();
-    if (lower === qLower || lower.includes(qLower.replace(/[?']/g, ''))) {
-      return answer;
-    }
+    if (sampleMatches(question, lower)) return answer;
   }
 
   return null;

@@ -15,8 +15,16 @@ describe('personality', () => {
     }
   });
 
-  it('answers a quick-question button instantly from the canned set', () => {
+  it('still has a stored answer for the local fallback brain', () => {
     expect(findSampleResponse('Who are you?')).toMatch(/Arman/);
+  });
+
+  it("hides a question's own sample answer from the model, so it answers freshly", () => {
+    const stored = findSampleResponse('Who are you?')!;
+    expect(buildSystemMessage()).toContain(stored);
+    expect(buildSystemMessage('Who are you?')).not.toContain(stored);
+    // Other samples still show the model how Arman talks.
+    expect(buildSystemMessage('Who are you?')).toContain(findSampleResponse('What are your goals?')!);
   });
 
   it('tells the model to talk briefly and casually, in English only', () => {
