@@ -4,7 +4,7 @@ import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import '../styles/v2.css';
 import { Seo } from '../components/Seo';
-import { V2Footer, V2Nav, useV2Root } from '../v2/Chrome';
+import { V2Backdrop, V2Footer, V2Nav, useV2Root } from '../v2/Chrome';
 import { LINKS } from '../v2/content';
 
 const Arrow = (
@@ -54,6 +54,7 @@ export function Contact() {
         description="Get in touch with Arman Damirchilou about research, collaborations, internships or AI projects. Based in Tehran, Iran."
         path="/contact"
       />
+      <V2Backdrop />
       <V2Nav />
 
       <main className="v2-contact v2-wrap">

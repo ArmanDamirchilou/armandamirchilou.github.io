@@ -3,6 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTehranTime } from '../hooks/useTehranTime';
 import { LINKS } from './content';
 import { scrollToTarget } from './scroll';
+import { Aurora } from './Aurora';
+import { useGlassPointer } from './useGlassPointer';
+import '../styles/glass.css';
+import '../styles/v2-glass.css';
 
 const SECTIONS = [
   { hash: '#work', label: 'Work' },
@@ -19,6 +23,12 @@ export function useV2Root() {
   }, []);
 }
 
+/** The living wallpaper every v2 page's glass floats over. */
+export function V2Backdrop() {
+  useGlassPointer();
+  return <Aurora />;
+}
+
 export function V2Nav() {
   const { pathname } = useLocation();
   const onHome = pathname === '/';
@@ -31,7 +41,7 @@ export function V2Nav() {
   };
 
   return (
-    <header className="v2-nav">
+    <header className="v2-nav lg lg-pill">
       <Link to="/" className="v2-nav-name" onClick={(e) => go(e, '#top')}>
         Arman Damirchilou
       </Link>
@@ -41,7 +51,7 @@ export function V2Nav() {
             {s.label}
           </Link>
         ))}
-        <Link to="/twin" className="v2-nav-twin">
+        <Link to="/twin" className="v2-nav-twin lg-press">
           Talk to my twin
         </Link>
       </nav>

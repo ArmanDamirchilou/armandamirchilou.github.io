@@ -10,11 +10,32 @@ import { useVoiceInput } from '../hooks/useVoiceInput';
 import { Seo } from '../components/Seo';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
+import '../styles/glass.css';
 import '../styles/twin-v2.css';
+import { Aurora } from '../v2/Aurora';
 import { api, apiHeaders } from '../lib/api';
 import { splitForSpeech } from '../lib/speech';
+import { charsThroughWord, findSpeech, locateChunks, normalize, wordStarts, wordsSpokenAt, type SpeechSpan } from '../lib/captions';
+import type { Caption } from '../components/ChatInterface';
 
 type Emotion = 'neutral' | 'happy' | 'thinking' | 'surprised' | 'concerned';
+
+/** A downloaded voice clip, and where the speech in it is (null if unknown). */
+type Clip = { url: string; speech: SpeechSpan | null };
+
+/**
+ * Decodes a clip to find where its speech and pauses are, for the captions.
+ * Offline, so it needs no user gesture and never touches playback.
+ */
+async function analyseSpeech(blob: Blob): Promise<SpeechSpan | null> {
+  try {
+    const ctx = new OfflineAudioContext(1, 1, 16000);
+    const audio = await ctx.decodeAudioData(await blob.arrayBuffer());
+    return findSpeech(audio.getChannelData(0), audio.sampleRate);
+  } catch {
+    return null;
+  }
+}
 
 const GlobeIcon = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -52,6 +73,13 @@ export function Twin() {
   const speakAbortRef = useRef<AbortController | null>(null);
   const [isVoicing, setIsVoicing] = useState(false);
 
+  // The reply being spoken is written out in step with the voice: `chars` is
+  // how much of it (normalized) has been said. null once it's all shown.
+  const [caption, setCaption] = useState<Caption | null>(null);
+  const showCaption = useCallback((id: string, chars: number) => {
+    setCaption((c) => (c && c.id === id && c.chars >= chars ? c : { id, chars }));
+  }, []);
+
   const stopSpeaking = useCallback(() => {
     speechRunRef.current++;
     if (speakAbortRef.current) {
@@ -62,18 +90,24 @@ export function Twin() {
     }
     speakAbortRef.current = null;
     stopAudio();
+    // Cut off mid-sentence, the rest of the reply is still worth reading.
+    setCaption(null);
     setIsVoicing(false);
     setEmotion('neutral');
   }, [stopAudio]);
 
   const handleResponse = useCallback(
-    async (data: { text: string; audioUrl: string | null; useBrowserTTS: boolean }) => {
+    async (data: { id: string; text: string; audioUrl: string | null; useBrowserTTS: boolean }) => {
       const run = ++speechRunRef.current;
+      const reply = normalize(data.text);
+      // Set before the first await, so the reply never flashes up in full.
+      setCaption({ id: data.id, chars: 0 });
       setEmotion('happy');
       setIsVoicing(true);
 
       const done = () => {
         if (run !== speechRunRef.current) return;
+        setCaption(null);
         setIsVoicing(false);
         setEmotion('neutral');
       };
@@ -87,39 +121,53 @@ export function Twin() {
       // place of the WAV). A blob URL is also same-origin, so lip-sync can read
       // it without CORS. The backend returns a site-relative path, which lives
       // on the backend host, not on the static host serving this page.
-      const loadClip = async (path: string): Promise<string | null> => {
+      const loadClip = async (path: string): Promise<Clip | null> => {
         const r = await fetch(api(path), { headers: apiHeaders, signal: ctrl.signal });
         const blob = await r.blob();
         if (!r.ok || !blob.type.startsWith('audio/')) return null;
-        return URL.createObjectURL(blob);
+        return { url: URL.createObjectURL(blob), speech: await analyseSpeech(blob) };
       };
-      const playClip = async (url: string) => {
+
+      // Plays one clip of the reply (`from`..`to` in it), writing its words
+      // into the chat as they're said.
+      const playClip = async (clip: Clip, from: number, to: number) => {
+        const text = reply.slice(from, to);
+        const words = text.split(' ').filter(Boolean);
+        let starts: number[] | null = null;
         try {
-          await playAudio(url);
+          await playAudio(clip.url, (t, duration) => {
+            if (run !== speechRunRef.current) return;
+            starts ??= wordStarts(words, clip.speech, Number.isFinite(duration) ? duration : 0);
+            showCaption(data.id, from + charsThroughWord(text, wordsSpokenAt(starts, t)));
+          });
         } finally {
-          URL.revokeObjectURL(url);
+          URL.revokeObjectURL(clip.url);
         }
+        if (run === speechRunRef.current) showCaption(data.id, to);
+      };
+      const speakFallback = async (from: number) => {
+        await speakWithBrowserTTS(reply.slice(from), (chars) => {
+          if (run === speechRunRef.current) showCaption(data.id, from + chars);
+        });
       };
 
       if (data.audioUrl) {
-        const url = await loadClip(data.audioUrl).catch(() => null);
+        const clip = await loadClip(data.audioUrl).catch(() => null);
         if (run !== speechRunRef.current) return;
-        if (url) await playClip(url);
-        else await speakWithBrowserTTS(data.text);
+        if (clip) await playClip(clip, 0, reply.length);
+        else await speakFallback(0);
         return done();
       }
       if (data.useBrowserTTS) {
-        await speakWithBrowserTTS(data.text);
+        await speakFallback(0);
         return done();
       }
 
-      // The reply arrives without audio so the text can appear immediately.
-      // It's voiced sentence by sentence: the first clip is short, so the twin
-      // starts talking quickly, and the next one is synthesised while the
-      // current one plays. If a clip fails, the browser's own voice finishes
-      // the rest rather than leaving the twin silent.
-      // Resolves to a playable blob URL, or null if this clip couldn't be made.
-      const fetchClip = async (text: string): Promise<string | null> => {
+      // The reply is voiced sentence by sentence: the first clip is short, so
+      // the twin starts talking quickly, and the next one is synthesised while
+      // the current one plays. If a clip fails, the browser's own voice
+      // finishes the rest rather than leaving the twin silent.
+      const fetchClip = async (text: string): Promise<Clip | null> => {
         const timer = setTimeout(() => ctrl.abort(), 45000);
         try {
           const r = await fetch(api('/api/speak'), {
@@ -138,27 +186,28 @@ export function Twin() {
         }
       };
 
-      const chunks = splitForSpeech(data.text);
+      const chunks = splitForSpeech(reply);
+      const spans = locateChunks(reply, chunks);
       let next = chunks.length ? fetchClip(chunks[0]) : null;
       for (let i = 0; i < chunks.length && next; i++) {
-        const url = await next;
+        const clip = await next;
         if (run !== speechRunRef.current) {
-          if (url) URL.revokeObjectURL(url);
+          if (clip) URL.revokeObjectURL(clip.url);
           return;
         }
         next = i + 1 < chunks.length ? fetchClip(chunks[i + 1]) : null;
-        if (url) {
-          await playClip(url);
+        if (clip) {
+          await playClip(clip, spans[i].from, spans[i].to);
         } else {
           next = null;
-          await speakWithBrowserTTS(chunks.slice(i).join(' '));
+          await speakFallback(spans[i].from);
         }
         if (run !== speechRunRef.current) return;
       }
       if (speakAbortRef.current === ctrl) speakAbortRef.current = null;
       done();
     },
-    [playAudio, speakWithBrowserTTS]
+    [playAudio, speakWithBrowserTTS, showCaption]
   );
 
   const { messages, isLoading, sendMessage } = useChat({ onResponse: handleResponse });
@@ -259,6 +308,10 @@ export function Twin() {
     };
   }, []);
 
+  // The wallpaper swells with the voice; a ref, so it never re-renders React.
+  const voiceEnergy = useRef(0);
+  voiceEnergy.current = isSpeaking ? 0.35 + audioLevel * 0.65 : isLoading ? 0.2 : 0;
+
   const status = isSpeaking ? 'speaking' : isLoading ? 'thinking' : 'idle';
   const statusLabel = isSpeaking ? 'Speaking' : isLoading ? 'Thinking' : 'Listening';
 
@@ -269,6 +322,7 @@ export function Twin() {
         description="A real-time 3D avatar of Arman Damirchilou that answers in his cloned voice: local voice model, LLM reasoning and live facial animation."
         path="/twin"
       />
+      <Aurora energy={voiceEnergy} />
       <header className="twin-topbar">
         <Link to="/" className="twin-back">Arman Damirchilou</Link>
         <div className="twin-topbar-title">
@@ -288,7 +342,14 @@ export function Twin() {
 
       <main className="twin-layout">
         {/* Stage — Arman's rigged 3D twin */}
-        <section className={`twin-stage-full ${status}`}>
+        <section
+          className={`twin-stage-full ${status}`}
+          style={{ '--level': audioLevel.toFixed(2) } as React.CSSProperties}
+        >
+          <span className="twin-glow" aria-hidden>
+            <i />
+            <i className="soft" />
+          </span>
           <div className="twin-stage-canvas">
             <AvatarScene
               isSpeaking={isSpeaking}
@@ -331,6 +392,7 @@ export function Twin() {
           )}
           <ChatInterface
             messages={messages}
+            caption={caption}
             isLoading={isLoading}
             isSpeaking={isSpeaking}
             onSendMessage={handleSendMessage}
@@ -348,13 +410,12 @@ export function Twin() {
         accent="azure"
         icon={WaveIcon}
         eyebrow="Welcome to my twin"
-        title="My voice is still in the studio"
+        title="Hey, I'm Arman's twin"
         acceptLabel="Let's talk"
       >
-        You're meeting my digital twin early. Right now I'm actively refining my
-        voice to make it sound as real and natural as possible — so it'll only
-        get better from here. Thanks for stopping by while it's still a
-        work in progress.
+        I think with an AI model and speak in Arman's cloned voice, so every
+        answer is fresh. My words appear in the chat as I say them. Turn your
+        sound on and ask me anything.
       </Modal>
 
       {/* Typing gate — its own message about answering in English */}

@@ -7,7 +7,7 @@ import '../styles/v2.css';
 import { Seo } from '../components/Seo';
 import { ProjectArt } from '../v2/ProjectArt';
 import { gsap, ScrollTrigger, prefersReducedMotion, scrollToTarget, useSmoothScroll } from '../v2/scroll';
-import { V2Footer, V2Nav, useV2Root } from '../v2/Chrome';
+import { V2Backdrop, V2Footer, V2Nav, useV2Root } from '../v2/Chrome';
 import { HERO_LINES, JOURNEY, MANIFESTO, PROFILE, PROJECTS, STATS } from '../v2/content';
 
 // three.js is most of the page's JavaScript; loading it on its own lets the
@@ -169,6 +169,7 @@ export function HomeV2() {
         path="/"
       />
 
+      <V2Backdrop />
       <V2Nav />
 
       <main id="top">
@@ -188,7 +189,7 @@ export function HomeV2() {
                     <Heading className="v2-hero-big">{l.big}</Heading>
                     <p className="v2-hero-small">{l.small}</p>
                     {i === HERO_LINES.length - 1 && (
-                      <Link to="/twin" className="v2-btn v2-btn-accent">
+                      <Link to="/twin" className="v2-btn v2-btn-accent lg lg-pill lg-accent lg-press">
                         Talk to my twin {Arrow}
                       </Link>
                     )}
@@ -216,7 +217,7 @@ export function HomeV2() {
         {/* ── Stats ────────────────────────────────────────────────────────── */}
         <section className="v2-stats v2-wrap" aria-label="At a glance">
           {STATS.map((s) => (
-            <div key={s.label} className="v2-stat v2-rise">
+            <div key={s.label} className="v2-stat lg v2-rise">
               <span className="v2-stat-num" data-to={s.value}>
                 {s.value}
               </span>
@@ -233,7 +234,7 @@ export function HomeV2() {
           <div className="v2-cards">
             {PROJECTS.map((p, i) => (
               <article key={p.id} className="v2-card" style={{ '--i': i } as React.CSSProperties}>
-                <div className="v2-card-inner">
+                <div className="v2-card-inner lg lg-strong">
                   <div className="v2-card-text">
                     <span className="v2-meta">
                       {String(i + 1).padStart(2, '0')} / {p.field}
@@ -282,7 +283,7 @@ export function HomeV2() {
           </div>
           <ol className="v2-journey-track">
             {JOURNEY.map((m) => (
-              <li key={`${m.year}-${m.title}`} className={`v2-milestone ${m.medal ?? ''}`}>
+              <li key={`${m.year}-${m.title}`} className={`v2-milestone lg ${m.medal ?? ''}`}>
                 <span className="v2-milestone-year">{m.year}</span>
                 <span className="v2-milestone-place">{m.place}</span>
                 <h3>{m.title}</h3>
@@ -301,7 +302,7 @@ export function HomeV2() {
             </h2>
             <p>Everything an admissions reader asks for, on one screen.</p>
           </div>
-          <dl className="v2-profile-grid">
+          <dl className="v2-profile-grid lg lg-strong">
             {PROFILE.map((g) => (
               <div key={g.label} className="v2-profile-row v2-rise">
                 <dt>{g.label}</dt>
@@ -319,10 +320,10 @@ export function HomeV2() {
 
         {/* ── Twin invitation ──────────────────────────────────────────────── */}
         <section className="v2-invite v2-wrap" aria-labelledby="invite-title">
-          <div className="v2-invite-inner v2-rise">
+          <div className="v2-invite-inner lg lg-strong v2-rise">
             <h2 id="invite-title">Don't take my word for it.</h2>
             <p>My digital twin knows my projects, my story and my plans. Ask it anything, out loud or by typing.</p>
-            <Link to="/twin" className="v2-btn v2-btn-accent">
+            <Link to="/twin" className="v2-btn v2-btn-accent lg lg-pill lg-accent lg-press">
               Talk to my twin {Arrow}
             </Link>
           </div>

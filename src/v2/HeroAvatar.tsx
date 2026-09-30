@@ -2,6 +2,7 @@ import { Suspense, useCallback, useEffect, useRef, useState, type MutableRefObje
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Avatar, type AvatarMeasurement } from '../components/Avatar';
+import { GlassOrbs } from './GlassOrbs';
 
 /**
  * The hero's 3D portrait. The camera is a function of scroll progress: it
@@ -154,6 +155,7 @@ export function HeroAvatar({
         <Suspense fallback={null}>
           <Avatar isSpeaking={false} isThinking={false} audioLevel={0} emotion="neutral" onMeasured={handleMeasured} />
         </Suspense>
+        <GlassOrbs measurement={measurement} progress={progress} pointer={pointer} />
         <ScrollCamera measurement={measurement} progress={progress} pointer={pointer} />
       </Canvas>
     </div>
