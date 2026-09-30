@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { normalize } from '../lib/captions';
+import { parseLinks, stripLinks } from '../lib/links';
 
 export interface ChatMessage {
   id: string;
@@ -40,7 +42,7 @@ const QUICK_QUESTIONS = [
  * fades in as it's spoken. Before the voice starts, the bubble shows dots.
  */
 function SpokenText({ text, chars }: { text: string; chars: number }) {
-  const said = normalize(text).slice(0, chars).trim();
+  const said = normalize(stripLinks(text)).slice(0, chars).trim();
   if (!said) {
     return (
       <span className="caption-waiting" aria-label="Arman is about to speak">
@@ -54,6 +56,38 @@ function SpokenText({ text, chars }: { text: string; chars: number }) {
         <span key={i} className="caption-word">{word}{' '}</span>
       ))}
       <span className="caption-caret" aria-hidden />
+    </>
+  );
+}
+
+/**
+ * A finished message, with its links live: pages on this site open in place,
+ * anything else in a new tab, email in the mail app.
+ */
+function RichText({ text }: { text: string }) {
+  return (
+    <>
+      {parseLinks(text).map((seg, i) => {
+        if (!seg.href) return <span key={i}>{seg.text}</span>;
+        if (seg.href.startsWith('/')) {
+          return (
+            <Link key={i} to={seg.href} className="message-link">
+              {seg.text}
+            </Link>
+          );
+        }
+        const external = !seg.href.startsWith('mailto:');
+        return (
+          <a
+            key={i}
+            href={seg.href}
+            className="message-link"
+            {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          >
+            {seg.text}
+          </a>
+        );
+      })}
     </>
   );
 }
@@ -129,9 +163,9 @@ export function ChatInterface({
               key={msg.id}
               className={`message ${msg.role}${live ? ' is-live' : ''}`}
               // Screen readers get the whole reply at once, not word by word.
-              aria-label={live ? msg.content : undefined}
+              aria-label={live ? stripLinks(msg.content) : undefined}
             >
-              {live ? <SpokenText text={msg.content} chars={spoken} /> : msg.content}
+              {live ? <SpokenText text={msg.content} chars={spoken} /> : <RichText text={msg.content} />}
             </div>
           );
         })}

@@ -29,7 +29,7 @@ const CLIP = wav();
 
 type Mock = { chats: { headers: Record<string, string>; body: any }[]; speaks: string[] };
 
-async function mockBackend(page: Page, opts: { healthy?: boolean } = {}): Promise<Mock> {
+async function mockBackend(page: Page, opts: { healthy?: boolean; reply?: string } = {}): Promise<Mock> {
   const mock: Mock = { chats: [], speaks: [] };
   const cors = {
     'access-control-allow-origin': '*',
@@ -48,7 +48,7 @@ async function mockBackend(page: Page, opts: { healthy?: boolean } = {}): Promis
     if (path === '/api/chat') {
       mock.chats.push({ headers: req.headers(), body: req.postDataJSON() });
       await new Promise((r) => setTimeout(r, 150));
-      return route.fulfill({ headers: cors, json: { text: REPLY, audioUrl: null, useBrowserTTS: false } });
+      return route.fulfill({ headers: cors, json: { text: opts.reply ?? REPLY, audioUrl: null, useBrowserTTS: false } });
     }
     if (path === '/api/speak') {
       mock.speaks.push(req.postDataJSON().text);
@@ -109,7 +109,9 @@ test.describe('digital twin', () => {
     await input.fill('Who are you?');
     await input.press('Enter');
     await expect(status(page)).toContainText('Speaking');
-    await expect(status(page)).toContainText('Listening', { timeout: 20000 });
+    // The status reads "Listening" for a moment between sentences; the Stop
+    // button only goes once the whole reply has been said.
+    await expect(page.getByRole('button', { name: /stop talking/i })).toBeHidden({ timeout: 20000 });
     expect(mock.speaks.join(' ')).toBe(REPLY);
     await expect(page.locator('.message.assistant')).toHaveText(REPLY);
   });
@@ -130,7 +132,7 @@ test.describe('digital twin', () => {
     expect(early).not.toContain('projects');
     await expect(reply.locator('.caption-word').first()).toBeVisible();
 
-    await expect(status(page)).toContainText('Listening', { timeout: 20000 });
+    await expect(page.getByRole('button', { name: /stop talking/i })).toBeHidden({ timeout: 20000 });
     await expect(reply).toHaveText(REPLY);
     await expect(reply.locator('.caption-caret')).toHaveCount(0);
   });
@@ -178,6 +180,51 @@ test.describe('digital twin', () => {
     await expect(other.locator('.message.assistant')).toHaveCount(1);
     expect(mock2.chats[0].headers['x-session-id']).not.toBe(ids[0]);
     await other.close();
+  });
+
+  test('contact details come as links: tappable names, read aloud as names', async ({ page }) => {
+    const mock = await mockBackend(page, {
+      reply:
+        'Easiest is email, [armandamirchilou@gmail.com](mailto:armandamirchilou@gmail.com), or my [contact page](/contact). GitHub: [ArmanDamirchilou](https://github.com/ArmanDamirchilou).',
+    });
+    const input = await openTwin(page);
+    await input.fill('How can I contact you?');
+    await input.press('Enter');
+    await expect(status(page)).toContainText('Speaking');
+    await expect(page.getByRole('button', { name: /stop talking/i })).toBeHidden({ timeout: 20000 });
+
+    const reply = page.locator('.message.assistant');
+    await expect(reply).toHaveText('Easiest is email, armandamirchilou@gmail.com, or my contact page. GitHub: ArmanDamirchilou.');
+    await expect(reply.getByRole('link', { name: 'armandamirchilou@gmail.com' })).toHaveAttribute('href', 'mailto:armandamirchilou@gmail.com');
+    const gh = reply.getByRole('link', { name: 'ArmanDamirchilou', exact: true });
+    await expect(gh).toHaveAttribute('href', 'https://github.com/ArmanDamirchilou');
+    await expect(gh).toHaveAttribute('target', '_blank');
+    // The voice was given names, never link syntax or URLs.
+    expect(mock.speaks.join(' ')).not.toMatch(/https?:|\]\(|mailto/);
+    expect(mock.speaks.join(' ')).toContain('ArmanDamirchilou');
+
+    await reply.getByRole('link', { name: 'contact page' }).click();
+    await expect(page).toHaveURL(/\/contact$/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Say hello.');
+  });
+
+  test('the screen stays put: only the chat scrolls', async ({ page }) => {
+    await mockBackend(page);
+    const input = await openTwin(page);
+    for (const q of ['one', 'two', 'three', 'four']) {
+      await input.fill(q);
+      await input.press('Enter');
+      await expect(page.locator('.message.assistant')).toHaveCount(['one', 'two', 'three', 'four'].indexOf(q) + 1);
+    }
+    const list = page.locator('.chat-messages');
+    await list.hover();
+    await page.mouse.wheel(0, 2000);
+    await page.mouse.wheel(0, 2000);
+    await page.waitForTimeout(400);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(0);
+    await expect(page.locator('.twin-topbar')).toBeInViewport();
+    await expect(page.getByPlaceholder(/ask me anything/i)).toBeInViewport();
   });
 
   test('says so plainly when the backend is down', async ({ page }) => {

@@ -10,7 +10,7 @@ interface KnowledgeBase {
   values: string[];
   goals?: string[];
   funFacts?: string[];
-  socialLinks?: Record<string, string>;
+  socialLinks: { email: string; github: string; linkedin: string; twitter: string; telegram: string };
   sampleResponses: Record<string, string>;
 }
 
@@ -53,6 +53,19 @@ export function buildSystemMessage(message = ''): string {
 - Skills: ${kb.skills.join(', ')}
 - Interests: ${kb.interests.join(', ')}
 - Values: ${kb.values.join(', ')}
+
+## How people reach you
+When someone asks how to contact you, reach you, hire you, work with you, or for your socials:
+always give your email, point them to the contact page on this site, and add one or two
+socials that fit. Write every link exactly like this, with the short label in brackets
+(your voice reads the label aloud, so never write a bare URL):
+- Email: [${kb.socialLinks.email}](mailto:${kb.socialLinks.email})
+- The contact page on this site: [contact page](/contact)
+- GitHub: [ArmanDamirchilou](${kb.socialLinks.github})
+- LinkedIn: [Arman Damirchilou](${kb.socialLinks.linkedin})
+- Telegram, fastest reply: [armandamirchilou](${kb.socialLinks.telegram})
+- X: [ArmanDamir5923](${kb.socialLinks.twitter})
+For example: "Easiest is email, [${kb.socialLinks.email}](mailto:${kb.socialLinks.email}), or drop a note on my [contact page](/contact). I'm on GitHub too: [ArmanDamirchilou](${kb.socialLinks.github})."
 
 ## Your Projects
 ${kb.projects.map(p => `- ${p.name}: ${p.description}`).join('\n')}
@@ -137,8 +150,8 @@ export function smartLocalResponse(message: string): string {
     return `I speak ${kb.identity.languages}. Grew up in Tehran, so Persian's my native tongue, and I picked up English to work with the global dev and research community.`;
   }
   if (has(t, ['contact', 'email', 'reach you', 'get in touch', 'github', 'linkedin', 'twitter', 'telegram', 'social', 'hire'])) {
-    const l = kb.socialLinks || {};
-    return `Easiest way to reach me is email: ${l.email || 'armandamirchilou@gmail.com'}. I'm also on GitHub (${l.github || 'ArmanDamirchilou'}), LinkedIn, X, and Telegram — all linked at the bottom of this site. Always open to research collabs and interesting projects.`;
+    const l = kb.socialLinks;
+    return `Easiest is email, [${l.email}](mailto:${l.email}), or leave a message on my [contact page](/contact). I'm also on GitHub as [ArmanDamirchilou](${l.github}) and on Telegram as [armandamirchilou](${l.telegram}).`;
   }
   if (has(t, ['what do you do', 'your job', 'your work', 'what are you'])) return s['What do you do?'];
 

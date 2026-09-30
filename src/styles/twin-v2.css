@@ -36,6 +36,21 @@
   padding-top: max(var(--gap), env(safe-area-inset-top));
   padding-bottom: max(var(--gap), env(safe-area-inset-bottom));
 }
+/* The twin is an app screen, not a page: it's pinned to the viewport and the
+   document under it can't scroll, so on a phone a swipe in the chat scrolls
+   the chat, never the whole screen (which slid the top bar away and left a
+   gap under the input). */
+html.is-twin,
+html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+.twin-page.is-dark {
+  position: fixed;
+  inset: 0;
+  height: auto;
+  box-sizing: border-box;
+}
+.twin-page.is-dark *, .twin-page.is-dark *::before, .twin-page.is-dark *::after { box-sizing: border-box; }
+.is-dark .chat-messages { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.is-dark .quick-actions { overscroll-behavior-x: contain; }
 .twin-page.is-dark > :is(.twin-topbar, .twin-layout) { position: relative; z-index: 1; }
 .twin-page.is-dark :is(button, input, textarea) { font-family: var(--sans); }
 
@@ -236,6 +251,19 @@
 .is-dark .message.assistant { color: var(--ink); border-bottom-left-radius: 8px; }
 .is-dark .message.system { color: var(--mute); }
 .is-dark .typing-indicator span { background: var(--ink); }
+
+/* Links in the twin's replies: its accent, underlined, big enough to tap. */
+.message-link {
+  color: #ff8a8f;
+  font-weight: 550;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 138, 143, 0.45);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+  padding-block: 2px;
+  transition: color 0.2s, text-decoration-color 0.2s;
+}
+.message-link:hover { color: #fff; text-decoration-color: #fff; }
 
 /* Live captions: the reply is written as the twin says it. */
 .is-dark .message.assistant.is-live {

@@ -1,5 +1,6 @@
 import { buildSystemMessage, smartLocalResponse } from './personality.js';
 import { addToHistory, buildMessageHistory } from './memory.js';
+import { linkify } from './links.js';
 
 interface ChatRequest {
   message: string;
@@ -25,12 +26,17 @@ const MAX_REPLY_TOKENS = 220;
 /**
  * The reply is read out by TTS and shown as plain text, so markdown and emoji
  * would either be spoken literally ("asterisk asterisk") or render as noise.
+ * Links are the exception: they're kept as markdown links (bare URLs and
+ * addresses become ones too) for the page to show as links and the voice to
+ * read by their label. They're set aside while the rest is cleaned, so an
+ * underscore in a URL can't be taken for emphasis.
  */
 export function toSpoken(text: string): string {
-  return text
+  const links: string[] = [];
+  const held = linkify(text).replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (m) => `\u0000${links.push(m) - 1}\u0000`);
+  return held
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/`([^`]*)`/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/(\*\*|__)(.*?)\1/g, '$2')
     .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,!?]|$)/g, '$1$2')
     .replace(/^\s{0,3}#{1,6}\s+/gm, '')
@@ -43,6 +49,7 @@ export function toSpoken(text: string): string {
     .replace(/\s*\n+\s*/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.!?;:])/g, '$1')
+    .replace(/\u0000(\d+)\u0000/g, (_, i) => links[Number(i)])
     .trim();
 }
 

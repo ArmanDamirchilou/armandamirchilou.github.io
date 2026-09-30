@@ -10,7 +10,18 @@ describe('toSpoken', () => {
     expect(toSpoken('I won **gold** at *Innoverse*.')).toBe('I won gold at Innoverse.');
     expect(toSpoken('## Projects\n- Traffic AI\n- Water AI')).toBe('Projects Traffic AI Water AI');
     expect(toSpoken('1. First\n2) Second')).toBe('First Second');
-    expect(toSpoken('See [my GitHub](https://github.com/x) and `rag-eval`.')).toBe('See my GitHub and rag-eval.');
+    expect(toSpoken('See `rag-eval` on **GitHub**.')).toBe('See rag-eval on GitHub.');
+  });
+
+  it('keeps links, and turns bare URLs and addresses into them, for the page to show', () => {
+    expect(toSpoken('GitHub: [ArmanDamirchilou](https://github.com/ArmanDamirchilou).')).toBe(
+      'GitHub: [ArmanDamirchilou](https://github.com/ArmanDamirchilou).'
+    );
+    expect(toSpoken('Find me at https://github.com/ArmanDamirchilou or armandamirchilou@gmail.com.')).toBe(
+      'Find me at [ArmanDamirchilou](https://github.com/ArmanDamirchilou) or [armandamirchilou@gmail.com](mailto:armandamirchilou@gmail.com).'
+    );
+    // Underscores inside a link are not emphasis.
+    expect(toSpoken('[a_b_c](https://x.com/a_b_c)')).toBe('[a_b_c](https://x.com/a_b_c)');
   });
 
   it('drops emoji', () => {

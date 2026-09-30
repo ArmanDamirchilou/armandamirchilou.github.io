@@ -3,6 +3,7 @@ import { writeFileSync, mkdirSync, existsSync, renameSync, rmSync, readdirSync, 
 import { randomUUID } from 'crypto';
 import { cancelGroup, requestClip, workerAlive } from './voiceWorker.js';
 import { splitForSpeech } from './speech.js';
+import { voiceText } from './links.js';
 
 interface TTSResult {
   audioUrl: string | null;
@@ -163,8 +164,10 @@ export async function synthesizeSpeech(text: string, requestId: string, group = 
   return synthesizeFresh(text, requestId, group);
 }
 
-async function synthesizeFresh(text: string, requestId: string, group?: string): Promise<TTSResult> {
+async function synthesizeFresh(written: string, requestId: string, group?: string): Promise<TTSResult> {
   const mode = process.env.TTS_MODE || 'edge';
+  // Said the way a person says it: "armandamirchilou at gmail dot com".
+  const text = voiceText(written);
   pruneOldAudio();
 
   // Arman's cloned voice from the remote worker → Kokoro → Edge fallback

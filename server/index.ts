@@ -5,6 +5,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { activeProviders, generateResponse } from './llm.js';
+import { stripLinks } from './links.js';
 import { activeVoice, cancelSpeech, prefetchSpeech, synthesizeSpeech } from './tts.js';
 import { deliver, nextJobs, releaseWaiter, requeue } from './voiceWorker.js';
 import { loadPersonality } from './personality.js';
@@ -133,12 +134,13 @@ app.post('/api/chat', async (req, res) => {
     // to drop. Clients that pass skipTts get the text straight away and fetch
     // the audio separately from /api/speak.
     if (req.body?.skipTts) {
-      prefetchSpeech(llmResponse.text, sessionId);
+      // The page voices the reply with its links reduced to their labels.
+      prefetchSpeech(stripLinks(llmResponse.text), sessionId);
       res.json({ text: llmResponse.text, audioUrl: null, useBrowserTTS: false });
       return;
     }
 
-    const ttsResult = await synthesizeSpeech(llmResponse.text, requestId, sessionId);
+    const ttsResult = await synthesizeSpeech(stripLinks(llmResponse.text), requestId, sessionId);
 
     res.json({
       text: llmResponse.text,

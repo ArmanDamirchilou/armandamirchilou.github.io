@@ -15,6 +15,7 @@ import '../styles/twin-v2.css';
 import { Aurora } from '../v2/Aurora';
 import { api, apiHeaders } from '../lib/api';
 import { splitForSpeech } from '../lib/speech';
+import { stripLinks } from '../lib/links';
 import { charsThroughWord, findSpeech, locateChunks, normalize, wordStarts, wordsSpokenAt, type SpeechSpan } from '../lib/captions';
 import type { Caption } from '../components/ChatInterface';
 
@@ -99,7 +100,9 @@ export function Twin() {
   const handleResponse = useCallback(
     async (data: { id: string; text: string; audioUrl: string | null; useBrowserTTS: boolean }) => {
       const run = ++speechRunRef.current;
-      const reply = normalize(data.text);
+      // Heard and captioned without link syntax; the chat shows the links
+      // once the reply has been said.
+      const reply = normalize(stripLinks(data.text));
       // Set before the first await, so the reply never flashes up in full.
       setCaption({ id: data.id, chars: 0 });
       setEmotion('happy');
@@ -219,7 +222,7 @@ export function Twin() {
     if (!caption || !caption.chars) return null;
     const msg = messages.find((m) => m.id === caption.id);
     if (!msg) return null;
-    const words = normalize(msg.content).slice(0, caption.chars).trim().split(' ');
+    const words = normalize(stripLinks(msg.content)).slice(0, caption.chars).trim().split(' ');
     const from = Math.max(0, words.length - 14);
     return words.slice(from).map((w, i) => ({ w, key: from + i }));
   })();
@@ -235,6 +238,13 @@ export function Twin() {
   );
 
   const { isRecording, toggleRecording } = useVoiceInput(handleSendMessage);
+
+  // The twin is a fixed app screen: the document under it mustn't scroll.
+  useEffect(() => {
+    const html = document.documentElement;
+    html.classList.add('is-twin');
+    return () => html.classList.remove('is-twin');
+  }, []);
 
   // Esc interrupts the twin, like cutting someone off mid-sentence; leaving
   // the page must silence it too, including a clip still being synthesised.
