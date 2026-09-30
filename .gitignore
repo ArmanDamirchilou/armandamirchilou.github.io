@@ -25,3 +25,7 @@ dist-liara/
 
 # Local clone of the Hugging Face Space (its own git repo)
 digital-twin/
+
+# Playwright output
+test-results/
+playwright-report/

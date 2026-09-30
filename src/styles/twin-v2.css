@@ -1,0 +1,170 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Twin page in the v2 look: same graphite ground, bone text and pomegranate
+   accent as the homepage, layered over the classic twin styles so the layout
+   and behaviour stay exactly as they were.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.twin-page.is-dark {
+  --bg: #0c0d0f;
+  --bg-2: #141518;
+  --bg-3: #1b1d21;
+  --ink: #ecebe6;
+  --mute: #8f9197;
+  --line: rgba(236, 235, 230, 0.12);
+  --accent: #e0484f;
+  --sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 400;
+}
+.twin-page.is-dark :is(button, input, textarea) { font-family: var(--sans); }
+
+/* Top bar */
+.is-dark .twin-topbar {
+  background: rgba(12, 13, 15, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+.is-dark .twin-back { font-weight: 500; color: var(--mute); transition: color 0.2s; }
+.is-dark .twin-back:hover { opacity: 1; color: var(--ink); }
+.is-dark .twin-topbar-name { font-weight: 600; letter-spacing: -0.02em; }
+.is-dark .voice-pill {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--mute);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+.is-dark .voice-pill.live { color: var(--ink); background: transparent; border-color: rgba(224, 72, 79, 0.5); }
+.is-dark .voice-pill.live::before { background: var(--accent); border: 0; }
+.is-dark .twin-exit {
+  font-weight: 550;
+  color: var(--bg);
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 18px;
+}
+.is-dark .twin-exit:hover { transform: none; box-shadow: none; background: #fff; }
+
+/* Stage */
+.is-dark .twin-stage-full {
+  background: radial-gradient(70% 70% at 50% 40%, #1d1b1e 0%, var(--bg) 75%);
+}
+.is-dark .twin-stage-full.speaking { background: radial-gradient(70% 70% at 50% 40%, #2a1a1c 0%, var(--bg) 75%); }
+.is-dark .twin-stage-full.thinking { background: radial-gradient(70% 70% at 50% 40%, #1c1d24 0%, var(--bg) 75%); }
+.is-dark .twin-status {
+  background: rgba(20, 21, 24, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 13.5px;
+}
+.is-dark .twin-status-dot { border: 0; background: #5a5d63; }
+.is-dark .twin-status.thinking .twin-status-dot { background: var(--ink); }
+.is-dark .twin-status.speaking .twin-status-dot { background: var(--accent); }
+.is-dark .twin-stop {
+  background: var(--accent);
+  border: 0;
+  box-shadow: 0 8px 30px rgba(224, 72, 79, 0.35);
+  font-weight: 550;
+}
+.is-dark .twin-stop:hover { background: #ea5a60; }
+
+/* Volume */
+.is-dark .volume-control {
+  background: rgba(20, 21, 24, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.is-dark .volume-btn { background: var(--bg-3); color: var(--ink); border: 1px solid var(--line); }
+.is-dark .volume-slider {
+  border: 0;
+  height: 4px;
+  background: linear-gradient(to right, var(--ink) 0 var(--vol, 100%), rgba(236, 235, 230, 0.18) var(--vol, 100%) 100%);
+}
+.is-dark .volume-slider::-webkit-slider-thumb { background: var(--ink); border: 0; box-shadow: none; width: 14px; height: 14px; }
+.is-dark .volume-slider::-moz-range-thumb { background: var(--ink); border: 0; box-shadow: none; width: 14px; height: 14px; }
+.is-dark .volume-readout { font-family: var(--mono); font-weight: 400; color: var(--mute); }
+
+/* Chat panel */
+.is-dark .twin-chat-panel { background: var(--bg-2); border-left: 1px solid var(--line); }
+.is-dark .twin-offline-note { background: var(--bg-3); border: 1px solid rgba(224, 72, 79, 0.45); box-shadow: none; color: var(--ink); }
+.is-dark .twin-offline-note span { color: var(--mute); }
+.is-dark .chat-header { border-bottom: 1px solid var(--line); }
+.is-dark .chat-header-avatar { background: var(--accent); color: #fff; border: 0; font-weight: 600; }
+.is-dark .chat-header-info h3 { font-weight: 600; }
+.is-dark .chat-header-info p { color: var(--mute); font-weight: 400; }
+.is-dark .quick-action {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  font-weight: 500;
+}
+.is-dark .quick-action:hover { background: var(--bg-3); border-color: rgba(236, 235, 230, 0.3); transform: none; }
+.is-dark .message { font-size: 15.5px; }
+.is-dark .message.user { background: var(--ink); color: var(--bg); }
+.is-dark .message.assistant { background: var(--bg-3); color: var(--ink); border: 1px solid var(--line); }
+.is-dark .message.system { color: var(--mute); }
+.is-dark .typing-indicator span { background: var(--ink); }
+.is-dark .chat-input-area { border-top: 1px solid var(--line); }
+.is-dark .chat-input {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  font-weight: 400;
+  transition: border-color 0.2s;
+}
+.is-dark .chat-input:focus { box-shadow: none; border-color: rgba(236, 235, 230, 0.35); }
+.is-dark .chat-input::placeholder { color: var(--mute); font-weight: 400; }
+.is-dark .btn-send { background: var(--ink); color: var(--bg); border: 0; }
+.is-dark .btn-send:hover:not(:disabled) { transform: none; box-shadow: none; background: #fff; }
+.is-dark .btn-mic { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+.is-dark .btn-mic:hover { background: var(--bg-3); }
+.is-dark .btn-mic.recording { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Modals */
+.is-dark .modal-backdrop { background: rgba(6, 6, 8, 0.6); backdrop-filter: blur(12px); }
+.is-dark .modal-card {
+  --acc: var(--accent);
+  background: var(--bg-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+.is-dark .modal-accent-bar { height: 3px; border: 0; background: var(--accent); }
+.is-dark .modal-icon { background: var(--bg-3); border: 1px solid var(--line); box-shadow: none; }
+.is-dark .modal-icon svg { color: var(--accent); }
+.is-dark .modal-eyebrow {
+  font-family: var(--mono);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--mute);
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.is-dark .modal-title { font-weight: 600; letter-spacing: -0.03em; }
+.is-dark .modal-body { color: var(--mute); }
+.is-dark .modal-body strong { color: var(--ink); font-weight: 600; }
+.is-dark .modal-accept {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-weight: 550;
+}
+.is-dark .modal-accept:hover { transform: none; box-shadow: none; background: #ea5a60; }
+.is-dark .modal-accept:active { transform: scale(0.98); box-shadow: none; }
+.is-dark :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

@@ -1,26 +1,30 @@
 # PRODUCT.md
 
 ## What this is
-Personal portfolio + live AI twin for **Arman Damirchilou** — a teenage AI software engineer from Tehran, Iran (b. 2010 — writing Python since 11, deep in AI since 13). International medalist (Gold, Innoverse Expo US 2025; 2nd, Iran National AI Cup 2024; more). The site presents his work and lets visitors talk to a real-time 3D avatar that answers in his cloned voice (`/twin`).
+Personal portfolio + live AI twin for **Arman Damirchilou**, a teenage AI software engineer from Tehran, Iran (b. 2010; writing Python since 11, deep in AI since 13). International medalist (Gold, Innoverse Expo US 2025; 2nd, Iran National AI Cup 2024; more). The site presents his work and lets visitors talk to a real-time 3D avatar of him (`/twin`).
 
 ## Register
-`brand` — this is a portfolio; design IS the product. A visitor should leave thinking "this person has extraordinary taste and shipped something alive."
+`brand`: this is a portfolio; design IS the product. A visitor should leave thinking "this person has extraordinary taste and shipped something alive."
 
 ## Audience
-University admissions, research labs, collaborators, press. Viewed on desktop first (large-screen gallery experience), must hold up on mobile.
+University admissions first, then research labs, collaborators, press. Desktop first (large-screen scroll experience), must hold up on mobile. The `Profile` section exists for admissions readers: every fact they'd look for, on one screen.
 
-## Design direction (locked by the owner)
-Exact-replica adaptation of **aikawakenichi.com** (studio: Garden Eight). Ground-truth tokens extracted from the live site's CSS:
-
-- **Color: pure monochrome.** `#000` ink on `#fff`. No accent color. One inverted (black) section allowed for rhythm.
-- **Type:** reference uses PP Neue Montreal (sans 400/600) + PP Editorial Old (serif 400). Free equivalents in use: **Hanken Grotesk** (sans) + **EB Garamond** (serif, incl. italic). Giant serif display (~12–17vw) for section titles/name; small 14–16px sans for everything else.
-- **Motion:** signature easing `cubic-bezier(.104,.204,.492,1)`. Masked line reveals (translateY 110% → 0), underline-grow hovers (scaleX 0 → 1, origin left), slow drifts. Lenis smooth scroll.
-- **Signature details:** fixed scroll-progress percentage (bottom-left), live clock `HH:MM:SS TEHRAN` in footer (reference shows JST), hairline rules `rgba(0,0,0,.14)`, obfuscated-style email display.
-- **Hard constraint from owner: zero emojis anywhere.** SVG icons only.
+## Design direction (v2, "Apple-style 3D scroll")
+- **Color:** dark graphite ground `#0c0d0f`, bone text `#ecebe6`, muted `#8f9197`, hairlines `rgba(236,235,230,.12)`. Exactly one accent: pomegranate `#e0484f` (a Persian symbol). One theme per page, no light sections.
+- **Type:** Geist Variable (display + body, tight negative tracking on display) and Geist Mono for meta labels. Self-hosted via @fontsource, no font CDN.
+- **Signature effect:** the hero pins a live 3D portrait whose camera orbits with scroll while three statements swap. Everything else is quiet: word-by-word manifesto reveal, count-up stats, stacked project cards, a pinned horizontal journey track.
+- **Motion:** GSAP ScrollTrigger + Lenis on GSAP's ticker. Every scroll effect has a `prefers-reduced-motion` fallback (static layout). Stacking and pinning only where the content fits the screen.
+- **Copy rules:** no em-dashes, no emoji anywhere (hard constraint from the owner), headlines short, facts only from `personality/knowledge-base.json` and `src/v2/content.ts`.
 
 ## Pages
-- `/` — hero (giant serif name + floating 3D avatar portrait → links to /twin), Work (typographic project index), Journey (award timeline), About, AI Twin invitation (inverted), footer/contact.
-- `/twin` — full-screen AI twin: 3D avatar stage + chat. GPT-4o-mini responses, local XTTS v2 voice clone (port 5050 via Express on 3001), audio-driven lip-sync (pending a model export with blendshapes).
+- `/`: v2 homepage (`src/pages/HomeV2.tsx`, styles `src/styles/v2.css`, content `src/v2/content.ts`).
+- `/twin`: full-screen AI twin, 3D avatar + chat, in the same dark theme (`src/styles/twin-v2.css`). Voice via the backend's TTS (Kokoro on CPU hosts), spoken sentence by sentence; Stop button, Esc, mic or a new message interrupt it.
+- `/contact`: mailto form + channels.
+- `/classic`: the previous neo-brutalist homepage, kept live on purpose (also tagged `classic-v1`, branch `classic-site`).
+- anything else: 404 page.
 
 ## Tech
-React 19 + TypeScript + Vite; React Three Fiber + drei; framer-motion; lenis; Express server (`server/index.ts`); Coqui XTTS v2 (`voice/clone_server.py`). Avatar: Avaturn GLB (Mixamo skeleton) at `public/model.glb`.
+React 19 + TypeScript + Vite; React Three Fiber + drei; GSAP + ScrollTrigger; Lenis; Express server (`server/index.ts`) with OpenRouter free models and pluggable TTS (`server/tts.ts`). Avatar GLB with ARKit blendshapes at `public/model.glb`.
+
+## Tests
+`npm test` (Vitest unit tests: speech chunking, reply cleanup, personality, sessions) and `npm run test:e2e` (Playwright against the production build, desktop + mobile, twin backend mocked).

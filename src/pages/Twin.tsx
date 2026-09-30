@@ -8,6 +8,9 @@ import { useChat, isLocalHost } from '../hooks/useChat';
 import { useAudio } from '../hooks/useAudio';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { Seo } from '../components/Seo';
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
+import '../styles/twin-v2.css';
 import { api, apiHeaders } from '../lib/api';
 import { splitForSpeech } from '../lib/speech';
 
@@ -229,24 +232,24 @@ export function Twin() {
   const statusLabel = isSpeaking ? 'Speaking' : isLoading ? 'Thinking' : 'Listening';
 
   return (
-    <div className="twin-page">
+    <div className="twin-page is-dark">
       <Seo
         title="AI Twin — talk to a digital Arman Damirchilou"
         description="A real-time 3D avatar of Arman Damirchilou that answers in his cloned voice: local voice model, LLM reasoning and live facial animation."
         path="/twin"
       />
       <header className="twin-topbar">
-        <Link to="/" className="twin-back">← Arman Damirchilou</Link>
+        <Link to="/" className="twin-back">Arman Damirchilou</Link>
         <div className="twin-topbar-title">
           <span className="twin-topbar-name">The AI Twin</span>
           <span className={`voice-pill ${voiceLive ? 'live' : ''}`}>
             {voiceLive
-              ? 'Voice — live'
+              ? 'Voice live'
               : backendUp === false
-                ? 'Voice — offline'
+                ? 'Voice offline'
                 : voiceLive === false
-                  ? 'Voice — warming up'
-                  : 'Voice — connecting'}
+                  ? 'Voice warming up'
+                  : 'Connecting'}
           </span>
         </div>
         <Link to="/" className="twin-exit">Close</Link>
