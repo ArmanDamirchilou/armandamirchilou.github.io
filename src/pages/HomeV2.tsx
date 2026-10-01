@@ -180,7 +180,7 @@ export function HomeV2() {
   return (
     <div className="v2" ref={root}>
       <Seo
-        title="Arman Damirchilou, AI engineer from Tehran"
+        title="Arman Damirchilou (آرمان دمیرچیلو) | AI Engineer from Tehran"
         description="Arman Damirchilou is a sixteen-year-old AI engineer from Tehran building machine learning, computer vision and voice AI systems. Gold medalist at Innoverse Expo. Talk to his digital twin."
         path="/"
       />

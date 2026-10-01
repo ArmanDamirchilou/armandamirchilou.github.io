@@ -157,6 +157,21 @@ test.describe('other pages', () => {
     await expect(page.getByRole('link', { name: /classic site/i })).toHaveCount(0);
   });
 
+  test('the Persian page is in Persian, right to left, and linked both ways', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/fa/');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('آرمان دمیرچیلو');
+    await expect(page.locator('main')).toHaveAttribute('dir', 'rtl');
+    await expect(page).toHaveTitle(/آرمان دمیرچیلو/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://armandamirchilou.github.io/fa/');
+    await expect(page.getByRole('link', { name: 'English version' })).toHaveAttribute('href', '/');
+    expect(errors).toEqual([]);
+
+    await page.goto('/');
+    await expect(page.locator('link[hreflang="fa"]')).toHaveAttribute('href', 'https://armandamirchilou.github.io/fa/');
+    await expect(page.locator('.v2-footer-links').getByRole('link', { name: 'فارسی' })).toHaveAttribute('href', '/fa');
+  });
+
   test('unknown routes show a 404 page instead of a blank screen', async ({ page }) => {
     await page.goto('/this-does-not-exist');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nothing here.');
