@@ -6,7 +6,6 @@ import { HomeV2 } from './pages/HomeV2';
 // so the homepage stays light.
 const Twin = lazy(() => import('./pages/Twin').then((m) => ({ default: m.Twin })));
 const Contact = lazy(() => import('./pages/Contact').then((m) => ({ default: m.Contact })));
-const Fa = lazy(() => import('./pages/Fa').then((m) => ({ default: m.Fa })));
 const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
 function PageLoader() {
@@ -25,7 +24,6 @@ export function App() {
       <Route path="/" element={<HomeV2 />} />
       <Route path="/twin" element={lazyRoute(<Twin />)} />
       <Route path="/contact" element={lazyRoute(<Contact />)} />
-      <Route path="/fa" element={lazyRoute(<Fa />)} />
       <Route path="*" element={lazyRoute(<NotFound />)} />
     </Routes>
   );

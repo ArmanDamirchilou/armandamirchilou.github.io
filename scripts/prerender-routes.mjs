@@ -20,16 +20,6 @@ const ROUTES = [
       'A real-time 3D avatar of Arman Damirchilou that answers in his cloned voice: local voice model, LLM reasoning and live facial animation.',
   },
   {
-    path: 'fa',
-    lang: 'fa',
-    locale: 'fa_IR',
-    // The English and Persian homepages are translations of each other.
-    translation: true,
-    title: 'آرمان دمیرچیلو | مهندس هوش مصنوعی از تهران',
-    description:
-      'آرمان دمیرچیلو (Arman Damirchilou)، مهندس هوش مصنوعی ۱۶ ساله از تهران. سازنده‌ی سیستم‌های یادگیری ماشین، بینایی کامپیوتر و هوش مصنوعی صوتی و برنده‌ی مدال طلای Innoverse Expo آمریکا.',
-  },
-  {
     path: 'contact',
     title: 'Contact Arman Damirchilou — AI Software Engineer',
     description:
@@ -59,16 +49,7 @@ for (const route of ROUTES) {
     .replace(/(<meta\s+name="twitter:title"\s+content=")[\s\S]*?(")/, `$1${title}$2`)
     .replace(/(<meta\s+name="twitter:description"\s+content=")[\s\S]*?(")/, `$1${desc}$2`);
 
-  let page = html;
-  if (route.lang) page = page.replace(/<html lang="en"/, `<html lang="${route.lang}"`);
-  if (route.locale) {
-    page = page
-      .replace(/(<meta\s+property="og:locale"\s+content=")[^"]*(")/, `$1${route.locale}$2`)
-      .replace(/(<meta\s+property="og:locale:alternate"\s+content=")[^"]*(")/, '$1en_US$2');
-  }
-  // hreflang pairs only pages that are translations of each other; on any
-  // other route the links would claim it's a version of the homepage.
-  if (!route.translation) page = page.replace(/\s*<!-- The same person in two languages[\s\S]*?hreflang="x-default"[^>]*>/, '');
+  const page = html;
 
   const dir = join(DIST, route.path);
   mkdirSync(dir, { recursive: true });
