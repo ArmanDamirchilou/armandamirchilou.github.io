@@ -128,7 +128,7 @@ test.describe('light and dark', () => {
     const html = page.locator('html');
     await expect(html).toHaveAttribute('data-theme', 'light');
     const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    expect(await bg()).toBe('rgb(247, 249, 252)');
+    expect(await bg()).toBe('rgb(245, 245, 247)');
 
     await page.getByRole('button', { name: 'Switch to dark mode' }).filter({ visible: true }).first().click();
     await expect(html).toHaveAttribute('data-theme', 'dark');

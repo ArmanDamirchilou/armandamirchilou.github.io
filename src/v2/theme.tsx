@@ -8,7 +8,7 @@ import { useSyncExternalStore } from 'react';
  */
 export type Theme = 'light' | 'dark';
 
-const THEME_COLOR: Record<Theme, string> = { light: '#f7f9fc', dark: '#0c0d0f' };
+const THEME_COLOR: Record<Theme, string> = { light: '#f5f5f7', dark: '#0c0d0f' };
 const listeners = new Set<() => void>();
 
 function current(): Theme {

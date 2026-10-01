@@ -96,9 +96,9 @@ function Lights() {
       <directionalLight position={[2.5, 2.2, 3]} intensity={2.4} color="#fff4ea" />
       {/* Fill: dim and cool so the shadow side keeps shape. */}
       <directionalLight position={[-3, 0.8, 2]} intensity={0.35} color="#dfe6ff" />
-      {/* Rims: the theme's accent on one edge (pomegranate at night, cobalt
-          by day), white on the other. */}
-      <directionalLight position={[-2.5, 1.8, -3]} intensity={3.2} color={theme === 'light' ? '#3891d9' : '#e0484f'} />
+      {/* Rims: the theme's accent on one edge (pomegranate at night, a soft
+          cobalt by day), white on the other. */}
+      <directionalLight position={[-2.5, 1.8, -3]} intensity={theme === 'light' ? 2.2 : 3.2} color={theme === 'light' ? '#7fa9e6' : '#e0484f'} />
       <directionalLight position={[2.8, 2.4, -2.5]} intensity={1.6} color="#ffffff" />
       <ambientLight intensity={0.18} />
     </>

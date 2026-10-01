@@ -180,6 +180,8 @@ export function Aurora({
     };
   }, [palette, theme, energy, scale]);
 
+  // Light mode is Apple-clean: a still #f5f5f7 page, no moving wallpaper.
+  if (theme === 'light' && !custom) return null;
   // A fresh canvas per theme: the old one's WebGL context is released on
   // cleanup, and a released context can't draw again.
   return <canvas key={theme} ref={ref} className={className} aria-hidden />;

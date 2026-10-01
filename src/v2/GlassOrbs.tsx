@@ -68,19 +68,19 @@ export function GlassOrbs({
 
   // At night, smoked glass: dark and see-through, lit only by its
   // reflections, so it sits in the graphite palette. By day, clear glass
-  // with a frost of white, like bubbles over the cobalt.
+  // with a cool grey-blue cast: pure white glass vanishes on white.
   const [theme] = useTheme();
   const day = theme === 'light';
   const material = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
         envMap,
-        envMapIntensity: day ? 1.1 : 1.6,
-        color: new THREE.Color(day ? '#ffffff' : '#0c0d0f'),
+        envMapIntensity: day ? 1.6 : 1.6,
+        color: new THREE.Color(day ? '#7d97b8' : '#0c0d0f'),
         metalness: 0,
         roughness: 0.015,
         transparent: true,
-        opacity: day ? 0.4 : 0.55,
+        opacity: day ? 0.32 : 0.55,
         clearcoat: 1,
         clearcoatRoughness: 0.03,
         iridescence: 0.3,
