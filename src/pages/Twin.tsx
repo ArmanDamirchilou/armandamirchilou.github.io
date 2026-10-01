@@ -13,7 +13,6 @@ import '@fontsource-variable/geist-mono';
 import '../styles/glass.css';
 import '../styles/twin-v2.css';
 import { Aurora } from '../v2/Aurora';
-import { ThemeToggle } from '../v2/theme';
 import { api, apiHeaders } from '../lib/api';
 import { splitForSpeech } from '../lib/speech';
 import { stripLinks } from '../lib/links';
@@ -354,10 +353,7 @@ export function Twin() {
                   : 'Connecting'}
           </span>
         </div>
-        <div className="twin-topbar-end">
-          <ThemeToggle />
-          <Link to="/" className="twin-exit">Close</Link>
-        </div>
+        <Link to="/" className="twin-exit">Close</Link>
       </header>
 
       <main className="twin-layout">

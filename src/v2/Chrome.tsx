@@ -5,7 +5,6 @@ import { LINKS } from './content';
 import { scrollToTarget } from './scroll';
 import { Aurora } from './Aurora';
 import { useGlassPointer } from './useGlassPointer';
-import { ThemeToggle } from './theme';
 import '../styles/glass.css';
 import '../styles/v2-glass.css';
 import '../styles/v2-mobile.css';
@@ -115,15 +114,13 @@ export function V2Nav() {
               {s.label}
             </Link>
           ))}
-          <ThemeToggle />
           <Link to="/twin" className="v2-nav-twin lg-press">
             Talk to my twin
           </Link>
         </nav>
         <span className="v2-nav-time" aria-label={`Tehran time ${time}`}>
-          <i aria-hidden /> <span className="v2-nav-time-city">Tehran </span>{time}
+          <i aria-hidden /> Tehran {time}
         </span>
-        <ThemeToggle className="v2-nav-theme-mobile" />
       </header>
 
       {/* Phones: the sections live in a floating tab bar under the thumb, and

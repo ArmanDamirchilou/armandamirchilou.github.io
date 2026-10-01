@@ -16,11 +16,14 @@ html.is-v2 #root { background: #0c0d0f; }
   --ink: #ecebe6;
   --mute: #8f9197;
   --line: rgba(255, 255, 255, 0.13);
-  --accent: #e0484f;
-  --accent-2: #b8323a;
-  --velvet: #2c0f12;
-  --velvet-2: #6b1e23;
+  --accent: #b32e33;
+  --accent-2: #8f1f24;
+  --velvet: #240808;
+  --velvet-2: #5a1216;
   --accent-3: #ecebe6;
+  /* Carmine is for fills and big type; small red text is a pale ruby, which
+     stays readable on near-black (carmine text there is only ~3:1). */
+  --accent-text: #e8b4ae;
   --radius: 30px;
   background: transparent;
 }
@@ -50,12 +53,12 @@ html.is-v2 #root { background: #0c0d0f; }
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .v2-btn.lg { height: 56px; padding: 0 28px; }
 .v2-btn-accent.lg-accent {
-  --lg-tint: linear-gradient(135deg, rgba(224, 72, 79, 0.9), rgba(107, 30, 35, 0.82));
+  --lg-tint: linear-gradient(135deg, rgba(179, 46, 51, 0.9), rgba(90, 18, 22, 0.82));
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%), var(--lg-tint);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     inset 0 -1px 0 rgba(0, 0, 0, 0.15),
-    0 14px 40px -10px rgba(224, 72, 79, 0.65);
+    0 14px 40px -10px rgba(179, 46, 51, 0.3);
 }
 .v2-btn-accent.lg-accent:hover { background: linear-gradient(160deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 55%), var(--lg-tint); }
 
@@ -70,7 +73,7 @@ html.is-v2 #root { background: #0c0d0f; }
 }
 /* The first line of the name catches the light like etched glass. */
 .v2-hero-line[data-index='0'] .v2-hero-big {
-  background: linear-gradient(100deg, #fff 0%, #fff 38%, #ffd0cc 46%, #f3e6d8 52%, #fff 60%, #fff 100%);
+  background: linear-gradient(100deg, #fff 0%, #fff 38%, #ead9d4 46%, #e6dccd 52%, #fff 60%, #fff 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -89,7 +92,7 @@ html.is-v2 #root { background: #0c0d0f; }
 .v2 .v2-stat + .v2-stat { padding: 30px 26px 28px; border: 0; }
 .v2-stat:first-child .v2-stat-num {
   color: transparent;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background: linear-gradient(135deg, #c43a3e, #a1272c);
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -113,8 +116,8 @@ html.is-v2 #root { background: #0c0d0f; }
   border-radius: calc(var(--radius) - 12px);
   border: 0;
   background:
-    radial-gradient(80% 80% at 70% 20%, rgba(107, 30, 35, 0.18), transparent 70%),
-    radial-gradient(70% 70% at 20% 90%, rgba(224, 72, 79, 0.16), transparent 70%),
+    radial-gradient(80% 80% at 70% 20%, rgba(90, 18, 22, 0.18), transparent 70%),
+    radial-gradient(70% 70% at 20% 90%, rgba(179, 46, 51, 0.16), transparent 70%),
     rgba(0, 0, 0, 0.35);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
@@ -129,8 +132,8 @@ html.is-v2 #root { background: #0c0d0f; }
 .v2-journey-progress i { background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3)); }
 .v2-milestone.lg { border: 0; border-radius: var(--radius); }
 .v2-milestone.gold.lg {
-  --lg-tint: linear-gradient(180deg, rgba(224, 72, 79, 0.22), rgba(107, 30, 35, 0.06) 70%);
-  --lg-rim: rgba(255, 196, 196, 0.85);
+  --lg-tint: linear-gradient(180deg, rgba(179, 46, 51, 0.22), rgba(90, 18, 22, 0.06) 70%);
+  --lg-rim: rgba(232, 180, 174, 0.85);
   /* v2.css paints the gold card with a solid fade; glass replaces it. */
   background: linear-gradient(160deg, var(--lg-fill) 0%, var(--lg-fill-2) 60%), var(--lg-tint);
 }
@@ -147,21 +150,17 @@ html.is-v2 #root { background: #0c0d0f; }
   border: 0;
   border-radius: 40px;
   --lg-tint:
-    radial-gradient(80% 120% at 100% 0%, rgba(224, 72, 79, 0.4), transparent 60%),
-    radial-gradient(70% 100% at 0% 100%, rgba(107, 30, 35, 0.3), transparent 60%);
+    radial-gradient(80% 120% at 100% 0%, rgba(179, 46, 51, 0.4), transparent 60%),
+    radial-gradient(70% 100% at 0% 100%, rgba(90, 18, 22, 0.3), transparent 60%);
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .v2-footer { border-top-color: rgba(255, 255, 255, 0.1); }
 .v2-footer-mail {
-  color: transparent;
-  background:
-    linear-gradient(90deg, var(--accent), var(--accent-2)) 0 100% / 0 1px no-repeat,
-    linear-gradient(90deg, var(--accent), var(--accent-2));
-  -webkit-background-clip: border-box, text;
-  background-clip: border-box, text;
+  color: var(--accent-text);
+  background: linear-gradient(var(--accent), var(--accent)) 0 100% / 0 1px no-repeat;
 }
-.v2-footer-mail:hover { background-size: 100% 1px, auto; }
+.v2-footer-mail:hover { background-size: 100% 1px; }
 
 /* ── Contact (homepage section and /contact) ─────────────────────────────── */
 .v2-contact-section { padding-block: clamp(40px, 8vh, 100px) clamp(100px, 16vh, 180px); }
@@ -185,10 +184,11 @@ html.is-v2 #root { background: #0c0d0f; }
 .v2-channel-mail.lg a { overflow-wrap: anywhere; }
 .v2 .v2-channel-mail .v2-copy { align-self: flex-start; margin-top: 8px; }
 .v2-channel-twin.lg {
-  --lg-tint: linear-gradient(135deg, rgba(224, 72, 79, 0.32), rgba(107, 30, 35, 0.22));
-  --lg-rim: rgba(255, 196, 196, 0.8);
+  --lg-tint: linear-gradient(135deg, rgba(179, 46, 51, 0.32), rgba(90, 18, 22, 0.22));
+  --lg-rim: rgba(232, 180, 174, 0.8);
 }
 .v2 .v2-channel-twin .v2-channel-name { color: #fff; }
+.v2 .v2-channel-mail a { color: var(--accent-text); }
 
 /* ── Contact page ────────────────────────────────────────────────────────── */
 .v2-form :is(input, textarea) {

@@ -14,10 +14,10 @@
   --ink: #ecebe6;
   --mute: #8f9197;
   --line: rgba(255, 255, 255, 0.14);
-  --accent: #e0484f;
-  --accent-2: #b8323a;
-  --velvet: #2c0f12;
-  --velvet-2: #6b1e23;
+  --accent: #b32e33;
+  --accent-2: #8f1f24;
+  --velvet: #240808;
+  --velvet-2: #5a1216;
   --accent-3: #ecebe6;
   --sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -151,7 +151,7 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   inset: 0;
   border-radius: inherit;
   padding: 3px;
-  background: conic-gradient(from var(--glow-angle, 0deg), #e0484f, #f2a07b, #ecebe6, #6b1e23, #e0484f);
+  background: conic-gradient(from var(--glow-angle, 0deg), #b32e33, #c8a97e, #ecebe6, #5a1216, #b32e33);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -181,14 +181,14 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .is-dark .twin-stop {
   z-index: 4;
   bottom: 18px;
-  background: linear-gradient(160deg, rgba(224, 72, 79, 0.85), rgba(160, 36, 44, 0.75));
+  background: linear-gradient(160deg, rgba(179, 46, 51, 0.85), rgba(110, 21, 26, 0.75));
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 196, 196, 0.45);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 10px 30px -6px rgba(224, 72, 79, 0.55);
+  border: 1px solid rgba(232, 180, 174, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 10px 30px -6px rgba(179, 46, 51, 0.3);
   font-weight: 550;
 }
-.is-dark .twin-stop:hover { background: linear-gradient(160deg, rgba(234, 90, 96, 0.9), rgba(176, 40, 48, 0.8)); border-color: rgba(255, 220, 224, 0.6); }
+.is-dark .twin-stop:hover { background: linear-gradient(160deg, rgba(192, 56, 61, 0.9), rgba(122, 26, 32, 0.8)); border-color: rgba(255, 220, 224, 0.6); }
 
 /* Volume */
 .is-dark .volume-control { z-index: 4; top: 16px; right: 16px; }
@@ -220,7 +220,7 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   from { opacity: 0; transform: perspective(1200px) translateX(40px) rotateY(-10deg) scale(0.96); }
   to { opacity: 1; transform: none; }
 }
-.is-dark .twin-offline-note { border-radius: 20px; margin: 14px 14px 0; color: var(--ink); border-color: rgba(224, 72, 79, 0.5); }
+.is-dark .twin-offline-note { border-radius: 20px; margin: 14px 14px 0; color: var(--ink); border-color: rgba(179, 46, 51, 0.5); }
 .is-dark .twin-offline-note span { color: var(--mute); }
 .is-dark .chat-header { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 .is-dark .chat-header-avatar {
@@ -228,7 +228,7 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   color: #fff;
   border: 0;
   font-weight: 600;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 16px -4px rgba(224, 72, 79, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 16px -4px rgba(179, 46, 51, 0.3);
 }
 .is-dark .chat-header-info h3 { font-weight: 600; letter-spacing: -0.01em; }
 .is-dark .chat-header-info p { color: var(--mute); font-weight: 400; }
@@ -244,9 +244,9 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .is-dark .message { font-size: 15.5px; border-radius: 22px; }
 .is-dark .message.user {
   color: #fff;
-  background: linear-gradient(135deg, rgba(224, 72, 79, 0.92), rgba(107, 30, 35, 0.88));
+  background: linear-gradient(135deg, rgba(179, 46, 51, 0.92), rgba(90, 18, 22, 0.88));
   border-bottom-right-radius: 8px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 24px -10px rgba(224, 72, 79, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 24px -10px rgba(179, 46, 51, 0.3);
 }
 .is-dark .message.assistant { color: var(--ink); border-bottom-left-radius: 8px; }
 .is-dark .message.system { color: var(--mute); }
@@ -254,7 +254,7 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 
 /* Links in the twin's replies: its accent, underlined, big enough to tap. */
 .message-link {
-  color: #ff8a8f;
+  color: #e8b4ae;
   font-weight: 550;
   text-decoration: underline;
   text-decoration-color: rgba(255, 138, 143, 0.45);
@@ -270,8 +270,8 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 
 /* Live captions: the reply is written as the twin says it. */
 .is-dark .message.assistant.is-live {
-  border-color: rgba(224, 72, 79, 0.45);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 4px rgba(224, 72, 79, 0.1), 0 10px 30px -10px rgba(224, 72, 79, 0.4);
+  border-color: rgba(179, 46, 51, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 4px rgba(179, 46, 51, 0.1), 0 10px 30px -10px rgba(179, 46, 51, 0.3);
 }
 .caption-word { animation: caption-in 0.32s var(--ease) both; }
 @keyframes caption-in {
@@ -319,7 +319,7 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .is-dark .btn-send:disabled { opacity: 0.25; }
 .is-dark .btn-mic { color: var(--ink); }
 .is-dark .btn-mic:hover { background: rgba(255, 255, 255, 0.16); transform: scale(1.06); }
-.is-dark .btn-mic.recording { background: var(--accent); color: #fff; border-color: rgba(255, 196, 196, 0.6); box-shadow: 0 0 0 6px rgba(224, 72, 79, 0.2); }
+.is-dark .btn-mic.recording { background: var(--accent); color: #fff; border-color: rgba(232, 180, 174, 0.6); box-shadow: 0 0 0 6px rgba(179, 46, 51, 0.2); }
 
 /* ── Notices: glass sheets over a dimmed, blurred world ──────────────────── */
 .is-dark .modal-backdrop { background: rgba(6, 5, 10, 0.35); -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
@@ -337,7 +337,7 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   background: conic-gradient(from 200deg, var(--accent), var(--velvet-2), var(--accent-2), var(--accent));
   border: 0;
   border-radius: 18px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px -6px rgba(224, 72, 79, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px -6px rgba(179, 46, 51, 0.3);
 }
 .is-dark .modal-icon svg { color: #fff; }
 .is-dark .modal-eyebrow {
@@ -355,19 +355,16 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .is-dark .modal-body strong { color: var(--ink); font-weight: 600; }
 .is-dark .modal-accept {
   color: #fff;
-  border: 1px solid rgba(255, 196, 196, 0.45);
+  border: 1px solid rgba(232, 180, 174, 0.45);
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(224, 72, 79, 0.95), rgba(107, 30, 35, 0.9));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 12px 30px -8px rgba(224, 72, 79, 0.6);
+  background: linear-gradient(135deg, rgba(179, 46, 51, 0.95), rgba(90, 18, 22, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 12px 30px -8px rgba(179, 46, 51, 0.3);
   font-weight: 550;
   transition: transform 0.35s var(--spring);
 }
-.is-dark .modal-accept:hover { transform: scale(1.02); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 12px 30px -8px rgba(224, 72, 79, 0.6); }
+.is-dark .modal-accept:hover { transform: scale(1.02); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 12px 30px -8px rgba(179, 46, 51, 0.3); }
 .is-dark .modal-accept:active { transform: scale(0.97); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45); }
 .is-dark :focus-visible { outline: 2px solid var(--accent-3); outline-offset: 3px; }
-
-/* Right end of the top bar: the theme switch, then Close. */
-.twin-topbar-end { display: flex; align-items: center; gap: 8px; }
 
 /* Back link: a chevron and the name. */
 .is-dark .twin-back { display: inline-flex; align-items: center; gap: 6px; }

@@ -11,8 +11,7 @@
 .v2-tabbar,
 .v2-cards-dots,
 .v2-nav-mono,
-.v2-nav-time,
-.theme-toggle.v2-nav-theme-mobile { display: none; }
+.v2-nav-time { display: none; }
 
 /* The hero's shade fades out before its bottom edge, so there's no seam
    where the pinned hero hands over to the page below. */
@@ -51,8 +50,8 @@
     font-weight: 600;
     letter-spacing: 0.03em;
     color: #fff;
-    background: linear-gradient(160deg, #ea5a60, #b8323a);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 16px -6px rgba(224, 72, 79, 0.75);
+    background: linear-gradient(160deg, #c0383d, #8f1f24);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 16px -6px rgba(179, 46, 51, 0.3);
   }
   .v2-nav-time {
     display: inline-flex;
@@ -69,10 +68,6 @@
     white-space: nowrap;
   }
   .v2-nav-time i { width: 6px; height: 6px; border-radius: 50%; background: #3ee08f; box-shadow: 0 0 8px #3ee08f; }
-  .theme-toggle.v2-nav-theme-mobile { display: inline-grid; margin-left: 6px; }
-  /* Room for the theme switch: the clock keeps its time, the label goes. */
-  .v2-nav-time-city { display: none; }
-  .v2-nav-time { padding: 8px 11px; }
 
   /* ── Tab bar ───────────────────────────────────────────────────────────── */
   .v2 > .v2-tabbar {
@@ -133,20 +128,20 @@
     place-items: center;
     border-radius: 50%;
     --lg-radius: 50%;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 12px 30px -8px rgba(224, 72, 79, 0.7);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 12px 30px -8px rgba(179, 46, 51, 0.3);
   }
   .v2-tabbar-twin svg { width: 26px; height: 26px; }
   /* A slow ring, like a mic that's listening. */
   .v2-tabbar-twin::after {
     background: none;
     border-radius: 50%;
-    box-shadow: 0 0 0 0 rgba(224, 72, 79, 0.55);
+    box-shadow: 0 0 0 0 rgba(179, 46, 51, 0.55);
     opacity: 1;
     animation: v2-twin-ring 2.6s var(--lg-ease) infinite;
   }
   @keyframes v2-twin-ring {
-    0% { box-shadow: 0 0 0 0 rgba(224, 72, 79, 0.5); }
-    70%, 100% { box-shadow: 0 0 0 16px rgba(224, 72, 79, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(179, 46, 51, 0.32); }
+    70%, 100% { box-shadow: 0 0 0 16px rgba(179, 46, 51, 0); }
   }
 
   /* ── Hero ──────────────────────────────────────────────────────────────── */
@@ -226,7 +221,7 @@
     bottom: 30px;
     width: 2px;
     border-radius: 2px;
-    background: linear-gradient(to bottom, var(--accent), rgba(224, 72, 79, 0.12));
+    background: linear-gradient(to bottom, var(--accent), rgba(179, 46, 51, 0.12));
   }
   .v2-milestone { padding: 20px 20px 22px; border-radius: 24px; }
   .v2-milestone-year { font-size: 44px; }
@@ -242,7 +237,7 @@
     border-radius: 50%;
     background: var(--bg);
     border: 2px solid var(--accent);
-    box-shadow: 0 0 12px rgba(224, 72, 79, 0.65);
+    box-shadow: 0 0 12px rgba(179, 46, 51, 0.3);
   }
   .v2-milestone.gold .v2-milestone-year::before { background: var(--accent); }
   .v2-milestone h3 { margin-top: 18px; font-size: 20px; }
@@ -276,7 +271,7 @@
     background: rgba(255, 255, 255, 0.05);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
-  .v2-footer-links a:last-child { grid-column: span 2; text-align: center; background: rgba(224, 72, 79, 0.16); box-shadow: inset 0 0 0 1px rgba(224, 72, 79, 0.35); }
+  .v2-footer-links a:last-child { grid-column: span 2; text-align: center; background: rgba(179, 46, 51, 0.16); box-shadow: inset 0 0 0 1px rgba(179, 46, 51, 0.3); }
   .v2-footer-fine { flex-direction: column; align-items: flex-start; gap: 10px; }
 
   /* ── Contact: form, then a 2x2 of channel tiles ────────────────────────── */

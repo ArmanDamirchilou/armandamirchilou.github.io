@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Homepage v2. Dark graphite, bone text, one accent (pomegranate). Everything
+   Homepage v2. Dark graphite, bone text, one accent (carmine). Everything
    is scoped under .v2 so it can't leak into the twin page.
    ───────────────────────────────────────────────────────────────────────────── */
 
@@ -26,7 +26,7 @@ html.lenis body { height: auto; }
   --ink: #ecebe6;
   --mute: #8f9197;
   --line: rgba(236, 235, 230, 0.12);
-  --accent: #e0484f;
+  --accent: #b32e33;
   --accent-ink: #fff;
   --radius: 22px;
   --gutter: clamp(20px, 5vw, 72px);
@@ -82,7 +82,7 @@ html.lenis body { height: auto; }
 .v2-btn:hover svg { transform: translateX(3px); }
 .v2-btn:active { transform: scale(0.97); }
 .v2-btn-accent { background: var(--accent); color: var(--accent-ink); }
-.v2-btn-accent:hover { background: #ea5a60; }
+.v2-btn-accent:hover { background: #c0383d; }
 
 .v2-link {
   display: inline-flex;
@@ -419,7 +419,7 @@ html.lenis body { height: auto; }
 .v2-milestone-place { margin-top: 8px; font-family: var(--mono); font-size: 12.5px; color: var(--mute); }
 .v2-milestone h3 { margin-top: auto; font-size: 23px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
 .v2-milestone p { margin-top: 10px; color: var(--mute); font-size: 15.5px; }
-.v2-milestone.gold { border-color: rgba(224, 72, 79, 0.55); background: linear-gradient(180deg, rgba(224, 72, 79, 0.14), var(--bg) 60%); }
+.v2-milestone.gold { border-color: rgba(179, 46, 51, 0.55); background: linear-gradient(180deg, rgba(179, 46, 51, 0.14), var(--bg) 60%); }
 .v2-medal {
   position: absolute;
   top: 28px;
@@ -468,7 +468,7 @@ html.lenis body { height: auto; }
   padding: clamp(40px, 8vw, 110px);
   border-radius: calc(var(--radius) + 8px);
   background:
-    radial-gradient(80% 120% at 100% 0%, rgba(224, 72, 79, 0.35), transparent 60%),
+    radial-gradient(80% 120% at 100% 0%, rgba(179, 46, 51, 0.35), transparent 60%),
     var(--bg-2);
   border: 1px solid var(--line);
 }

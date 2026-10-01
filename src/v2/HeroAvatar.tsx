@@ -3,7 +3,6 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Avatar, type AvatarMeasurement } from '../components/Avatar';
 import { GlassOrbs } from './GlassOrbs';
-import { useTheme } from './theme';
 
 /**
  * The hero's 3D portrait. The camera is a function of scroll progress: it
@@ -89,16 +88,15 @@ function ScrollCamera({
 }
 
 function Lights() {
-  const [theme] = useTheme();
   return (
     <>
       {/* Key: soft, from camera-right, slightly warm. */}
       <directionalLight position={[2.5, 2.2, 3]} intensity={2.4} color="#fff4ea" />
       {/* Fill: dim and cool so the shadow side keeps shape. */}
       <directionalLight position={[-3, 0.8, 2]} intensity={0.35} color="#dfe6ff" />
-      {/* Rims: the theme's accent on one edge (pomegranate at night, a soft
-          cobalt by day), white on the other. */}
-      <directionalLight position={[-2.5, 1.8, -3]} intensity={theme === 'light' ? 2.2 : 3.2} color={theme === 'light' ? '#7fa9e6' : '#e0484f'} />
+      {/* Rims: a low carmine edge on one side, white on the other. Kept
+          dim: a bright red rim light reads as anime, not portrait. */}
+      <directionalLight position={[-2.5, 1.8, -3]} intensity={1.6} color="#b32e33" />
       <directionalLight position={[2.8, 2.4, -2.5]} intensity={1.6} color="#ffffff" />
       <ambientLight intensity={0.18} />
     </>
