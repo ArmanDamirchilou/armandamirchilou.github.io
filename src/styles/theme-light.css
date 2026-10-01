@@ -1,0 +1,299 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Light mode: paper white and cobalt, the palette of a Pinterest reference
+   Arman picked (deep navy #0b2f5b, cobalt #1a72c4, azure #3891d9, sky
+   #97bee7, white #fafafa). It's the default; dark mode is the graphite and
+   pomegranate site underneath, untouched.
+
+   Every rule is the dark rule's selector behind html[data-theme='light'], so
+   it wins on specificity whatever order the stylesheets load in (the twin's
+   styles arrive later, in their own chunk).
+
+   Big moments go full cobalt, as in the reference: the hero is a cobalt
+   panel framed in white, the twin's stage puts the avatar on cobalt, and the
+   invitation is a cobalt slab. Everything else is white glass on paper.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+html[data-theme='light'] {
+  --l-paper: #f7f9fc;
+  --l-ink: #0a2244;
+  --l-mute: #5a6f8f;
+  --l-line: rgba(10, 34, 68, 0.12);
+  --l-cobalt: #1a6fc4;
+  --l-deep: #0b3a75;
+  --l-azure: #3891d9;
+  --l-sky: #97bee7;
+  --l-grad: linear-gradient(135deg, #0b2f5b 0%, #12508f 40%, #1a72c4 72%, #3891d9 100%);
+  --l-shadow: 0 1px 2px rgba(10, 34, 68, 0.06), 0 14px 34px -14px rgba(16, 58, 120, 0.22), 0 40px 80px -40px rgba(16, 58, 120, 0.25);
+  color-scheme: light;
+}
+
+/* ── Ground ──────────────────────────────────────────────────────────────── */
+html[data-theme='light'].is-v2,
+html[data-theme='light'].is-v2 body,
+html[data-theme='light'].is-v2 #root,
+html[data-theme='light'] body { background: var(--l-paper); }
+html[data-theme='light'] .aurora.is-fallback {
+  background:
+    radial-gradient(60% 50% at 25% 20%, rgba(151, 190, 231, 0.55), transparent 70%),
+    radial-gradient(50% 50% at 80% 70%, rgba(219, 233, 248, 0.8), transparent 70%),
+    var(--l-paper);
+}
+html[data-theme='light'] .page-loader { background: var(--l-paper); }
+
+html[data-theme='light'] .v2 {
+  --bg: #f7f9fc;
+  --bg-2: rgba(255, 255, 255, 0.7);
+  --bg-3: rgba(10, 34, 68, 0.05);
+  --ink: #0a2244;
+  --mute: #5a6f8f;
+  --line: rgba(10, 34, 68, 0.12);
+  --accent: #1a6fc4;
+  --accent-2: #0b3a75;
+  --accent-3: #3891d9;
+  --accent-ink: #fff;
+  --velvet: #0b2f5b;
+  --velvet-2: #12508f;
+}
+
+/* ── Glass: white panes with a cool shadow ───────────────────────────────── */
+html[data-theme='light'] .lg {
+  --lg-fill: rgba(255, 255, 255, 0.82);
+  --lg-fill-2: rgba(255, 255, 255, 0.56);
+  --lg-rim: rgba(255, 255, 255, 1);
+  --lg-rim-2: rgba(26, 111, 196, 0.28);
+  box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(10, 34, 68, 0.06), var(--l-shadow);
+}
+html[data-theme='light'] .lg::after {
+  background: radial-gradient(420px circle at var(--mx, 30%) var(--my, -20%), rgba(56, 145, 217, 0.12), rgba(56, 145, 217, 0.03) 35%, transparent 60%);
+}
+html[data-theme='light'] .lg-strong { --lg-fill: rgba(255, 255, 255, 0.9); }
+html[data-theme='light'] .lg-accent,
+html[data-theme='light'] .v2-btn-accent.lg-accent {
+  --lg-tint: linear-gradient(135deg, #1a72c4, #0b3a75);
+  /* A sheen, not the white frost of other panes, or the cobalt goes pale. */
+  --lg-fill: rgba(255, 255, 255, 0.2);
+  --lg-fill-2: rgba(255, 255, 255, 0);
+  --lg-rim: rgba(255, 255, 255, 0.75);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 14px 34px -10px rgba(26, 111, 196, 0.55);
+}
+
+/* ── The theme switch ────────────────────────────────────────────────────── */
+html[data-theme='light'] .theme-toggle { color: var(--l-ink); background: rgba(10, 34, 68, 0.06); box-shadow: inset 0 0 0 1px rgba(10, 34, 68, 0.08); }
+html[data-theme='light'] .theme-toggle:hover { background: rgba(26, 111, 196, 0.12); color: var(--l-cobalt); }
+
+/* ── Nav ─────────────────────────────────────────────────────────────────── */
+html[data-theme='light'] .v2 > .v2-nav { background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.6)); }
+html[data-theme='light'] .v2-nav-twin {
+  color: #fff;
+  background: linear-gradient(180deg, #1f78cf, #1a5fb0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px -8px rgba(26, 111, 196, 0.6);
+}
+
+/* ── Hero: a cobalt panel framed in white, like the reference ────────────── */
+html[data-theme='light'] .v2-hero { --ink: #fff; --mute: rgba(255, 255, 255, 0.8); }
+html[data-theme='light'] .v2-hero-sticky {
+  background:
+    radial-gradient(55% 60% at 66% 40%, rgba(151, 190, 231, 0.35), transparent 70%),
+    var(--l-grad);
+  clip-path: inset(12px round 36px);
+}
+html[data-theme='light'] .v2-hero-sticky::after {
+  background:
+    linear-gradient(to top, transparent 0%, rgba(8, 28, 64, 0.55) 12%, rgba(8, 28, 64, 0.22) 30%, transparent 56%),
+    linear-gradient(to right, rgba(8, 28, 64, 0.45) 0%, transparent 45%);
+}
+html[data-theme='light'] .v2-hero-line[data-index='0'] .v2-hero-big {
+  background: linear-gradient(100deg, #fff 0%, #fff 38%, #cfe4fb 46%, #97bee7 52%, #fff 60%, #fff 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+html[data-theme='light'] .v2-hero-cue { background: rgba(255, 255, 255, 0.3); }
+html[data-theme='light'] .v2-hero-cue i { background: #fff; }
+/* On cobalt, the call to action is a white pill with cobalt text. */
+html[data-theme='light'] .v2-hero .v2-btn-accent.lg-accent {
+  --lg-tint: #fff;
+  color: var(--l-cobalt);
+  background: #fff;
+  box-shadow: 0 14px 34px -12px rgba(4, 20, 50, 0.55);
+}
+
+/* ── Stats, cards, tags ──────────────────────────────────────────────────── */
+html[data-theme='light'] .v2-card-inner.lg { --lg-tint: rgba(255, 255, 255, 0.55); }
+html[data-theme='light'] .v2-card-inner.lg::after { background: var(--l-paper); }
+/* Project art sits on cobalt, drawn in white and sky. */
+html[data-theme='light'] .v2-card-visual {
+  --ink: #fff;
+  --mute: rgba(255, 255, 255, 0.75);
+  --accent: #97bee7;
+  background: radial-gradient(80% 80% at 70% 20%, rgba(151, 190, 231, 0.35), transparent 70%), var(--l-grad);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+html[data-theme='light'] .v2 .art-line { fill: rgba(255, 255, 255, 0.2); }
+html[data-theme='light'] .v2 .art-road { stroke: rgba(255, 255, 255, 0.14); }
+html[data-theme='light'] .v2 .art-lane,
+html[data-theme='light'] .v2 .art-wave { stroke: rgba(255, 255, 255, 0.45); }
+html[data-theme='light'] .v2 .art-dot { fill: rgba(255, 255, 255, 0.3); }
+html[data-theme='light'] .v2-tags li { color: var(--l-mute); background: rgba(26, 111, 196, 0.07); border-color: rgba(26, 111, 196, 0.18); }
+
+/* ── Journey ─────────────────────────────────────────────────────────────── */
+html[data-theme='light'] .v2-journey-progress { background: rgba(10, 34, 68, 0.1); }
+html[data-theme='light'] .v2-journey-progress i { background: linear-gradient(90deg, var(--l-deep), var(--l-cobalt), var(--l-azure)); }
+html[data-theme='light'] .v2-milestone.gold.lg {
+  --lg-tint: linear-gradient(180deg, rgba(26, 111, 196, 0.14), rgba(56, 145, 217, 0.03) 70%);
+  --lg-rim: rgba(255, 255, 255, 1);
+}
+html[data-theme='light'] .v2-medal.honor { box-shadow: inset 0 0 0 6px rgba(10, 34, 68, 0.14); }
+
+/* ── Profile ─────────────────────────────────────────────────────────────── */
+html[data-theme='light'] .v2-profile-row { border-top-color: rgba(10, 34, 68, 0.08); }
+
+/* ── Invitation: a cobalt slab ───────────────────────────────────────────── */
+html[data-theme='light'] .v2-invite-inner.lg {
+  --ink: #fff;
+  --mute: rgba(255, 255, 255, 0.82);
+  --lg-tint: var(--l-grad);
+  --lg-fill: rgba(255, 255, 255, 0.08);
+  --lg-fill-2: rgba(255, 255, 255, 0);
+  /* Spelled out: v2.css sets this element's background itself, and wins
+     over .lg whenever it happens to load later. */
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 60%), var(--l-grad);
+  color: #fff;
+}
+html[data-theme='light'] .v2-invite-inner .v2-btn-accent.lg-accent {
+  --lg-tint: #fff;
+  color: var(--l-cobalt);
+  background: #fff;
+}
+
+/* ── Contact ─────────────────────────────────────────────────────────────── */
+html[data-theme='light'] .v2-form :is(input, textarea) {
+  color: var(--l-ink);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(10, 34, 68, 0.14);
+  box-shadow: inset 0 1px 2px rgba(10, 34, 68, 0.05);
+}
+html[data-theme='light'] .v2-form :is(input, textarea):focus { background: #fff; border-color: var(--l-cobalt); box-shadow: 0 0 0 4px rgba(26, 111, 196, 0.12); }
+html[data-theme='light'] .v2-copy { color: var(--l-ink); background: rgba(10, 34, 68, 0.05); border-color: rgba(10, 34, 68, 0.12); }
+html[data-theme='light'] .v2-channel-twin.lg { --lg-tint: var(--l-grad); --ink: #fff; --mute: rgba(255, 255, 255, 0.8); color: #fff; }
+html[data-theme='light'] .v2 .v2-channel-twin .v2-channel-value,
+html[data-theme='light'] .v2 .v2-channel-twin .v2-channel-arrow,
+html[data-theme='light'] .v2 .v2-channel-twin .v2-meta { color: rgba(255, 255, 255, 0.8); }
+html[data-theme='light'] a.v2-channel:hover .v2-channel-name { color: var(--l-cobalt); }
+html[data-theme='light'] a.v2-channel-twin:hover .v2-channel-name { color: #fff; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+html[data-theme='light'] .v2-footer { border-top-color: rgba(10, 34, 68, 0.1); }
+
+/* ── Phones ──────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  html[data-theme='light'] .v2 > .v2-nav { --lg-tint: rgba(255, 255, 255, 0.6); }
+  html[data-theme='light'] .v2-nav-mono {
+    background: linear-gradient(160deg, #1f78cf, #0b3a75);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 16px -6px rgba(26, 111, 196, 0.7);
+  }
+  html[data-theme='light'] .v2-nav-time { background: rgba(10, 34, 68, 0.05); box-shadow: inset 0 0 0 1px rgba(10, 34, 68, 0.08); }
+  html[data-theme='light'] .v2-tabbar-tabs { --lg-tint: rgba(255, 255, 255, 0.7); }
+  html[data-theme='light'] .v2-tabbar-lens {
+    background: linear-gradient(180deg, rgba(26, 111, 196, 0.16), rgba(26, 111, 196, 0.08));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(26, 111, 196, 0.16);
+  }
+  html[data-theme='light'] .v2-tabbar-twin {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 12px 30px -8px rgba(26, 111, 196, 0.65);
+  }
+  html[data-theme='light'] .v2-tabbar-twin::after { animation-name: v2-twin-ring-light; }
+  @keyframes v2-twin-ring-light {
+    0% { box-shadow: 0 0 0 0 rgba(26, 111, 196, 0.45); }
+    70%, 100% { box-shadow: 0 0 0 16px rgba(26, 111, 196, 0); }
+  }
+  html[data-theme='light'] .v2-hero-sticky { clip-path: inset(8px round 30px); }
+  html[data-theme='light'] .v2-journey-track::before { background: linear-gradient(to bottom, var(--l-cobalt), rgba(26, 111, 196, 0.12)); }
+  html[data-theme='light'] .v2-milestone-year::before { box-shadow: 0 0 12px rgba(26, 111, 196, 0.5); }
+  html[data-theme='light'] .v2-cards-dots i { background: rgba(10, 34, 68, 0.16); }
+  html[data-theme='light'] .v2-cards-dots i.is-on { background: var(--l-cobalt); }
+  html[data-theme='light'] .v2-footer-links a { color: var(--l-ink); background: rgba(255, 255, 255, 0.75); box-shadow: inset 0 0 0 1px rgba(10, 34, 68, 0.08), 0 6px 16px -10px rgba(16, 58, 120, 0.3); }
+  html[data-theme='light'] .v2-footer-links a:last-child { color: #fff; background: linear-gradient(135deg, #1a72c4, #0b3a75); box-shadow: none; }
+}
+
+/* ═══ The twin ═══════════════════════════════════════════════════════════════ */
+html[data-theme='light'] .twin-page.is-dark {
+  --bg: #f7f9fc;
+  --bg-2: rgba(255, 255, 255, 0.7);
+  --bg-3: rgba(10, 34, 68, 0.05);
+  --ink: #0a2244;
+  --mute: #5a6f8f;
+  --line: rgba(10, 34, 68, 0.12);
+  --accent: #1a6fc4;
+  --accent-2: #0b3a75;
+  --accent-3: #3891d9;
+  --velvet: #0b2f5b;
+  --velvet-2: #12508f;
+  background: var(--l-paper);
+}
+html[data-theme='light'] .is-dark :is(.twin-topbar, .twin-chat-panel, .twin-status, .volume-control, .quick-action,
+  .chat-input-wrapper, .message.assistant, .modal-card, .twin-offline-note, .voice-pill, .btn-mic) {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.62) 60%);
+  border-color: rgba(10, 34, 68, 0.08);
+  box-shadow: inset 0 1px 0 #fff, var(--l-shadow);
+}
+html[data-theme='light'] .is-dark .twin-chat-panel {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.6) 45%, rgba(255, 255, 255, 0.7));
+}
+/* Stage: the avatar on cobalt. */
+html[data-theme='light'] .is-dark .twin-stage-full,
+html[data-theme='light'] .is-dark .twin-stage-full.speaking,
+html[data-theme='light'] .is-dark .twin-stage-full.thinking {
+  background: radial-gradient(60% 55% at 50% 38%, rgba(151, 190, 231, 0.4), transparent 70%), var(--l-grad);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 30px 70px -30px rgba(16, 58, 120, 0.55);
+}
+html[data-theme='light'] .twin-glow i::before {
+  background: conic-gradient(from var(--glow-angle, 0deg), #ffffff, #97bee7, #3891d9, #1a6fc4, #ffffff);
+}
+html[data-theme='light'] .is-dark .twin-stop {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(235, 243, 252, 0.9));
+  color: var(--l-cobalt);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px -8px rgba(4, 20, 50, 0.5);
+}
+html[data-theme='light'] .is-dark .twin-exit {
+  color: #fff;
+  background: linear-gradient(180deg, #1f78cf, #1a5fb0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px -8px rgba(26, 111, 196, 0.6);
+}
+html[data-theme='light'] .is-dark .volume-btn { color: var(--l-ink); background: rgba(10, 34, 68, 0.06); border-color: rgba(10, 34, 68, 0.1); }
+html[data-theme='light'] .is-dark .volume-slider {
+  background: linear-gradient(to right, var(--l-cobalt) 0 var(--vol, 100%), rgba(10, 34, 68, 0.14) var(--vol, 100%) 100%);
+}
+html[data-theme='light'] .is-dark .quick-action:hover { background: rgba(26, 111, 196, 0.1); }
+html[data-theme='light'] .is-dark .message.user {
+  background: linear-gradient(135deg, #1f78cf, #0b3a75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 24px -10px rgba(26, 111, 196, 0.6);
+}
+html[data-theme='light'] .is-dark .message.assistant.is-live {
+  border-color: rgba(26, 111, 196, 0.4);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 4px rgba(26, 111, 196, 0.1), 0 10px 30px -12px rgba(26, 111, 196, 0.35);
+}
+html[data-theme='light'] .message-link { color: var(--l-cobalt); text-decoration-color: rgba(26, 111, 196, 0.4); }
+@media (hover: hover) {
+  html[data-theme='light'] .message-link:hover { color: var(--l-deep); text-decoration-color: var(--l-deep); }
+}
+html[data-theme='light'] .is-dark .btn-send {
+  color: #fff;
+  background: linear-gradient(180deg, #1f78cf, #1a5fb0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px -4px rgba(26, 111, 196, 0.6);
+}
+html[data-theme='light'] .is-dark .btn-mic:hover { background: rgba(26, 111, 196, 0.1); }
+html[data-theme='light'] .is-dark .chat-header { border-bottom-color: rgba(10, 34, 68, 0.08); }
+html[data-theme='light'] .is-dark .chat-input-wrapper:focus-within { border-color: rgba(26, 111, 196, 0.45); }
+html[data-theme='light'] .is-dark .twin-offline-note { border-color: rgba(26, 111, 196, 0.45); }
+html[data-theme='light'] .is-dark .modal-backdrop { background: rgba(10, 34, 68, 0.2); }
+html[data-theme='light'] .is-dark .modal-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.82) 60%);
+  box-shadow: inset 0 1px 0 #fff, 0 40px 100px -24px rgba(16, 58, 120, 0.45);
+}
+html[data-theme='light'] .is-dark .modal-accept {
+  background: linear-gradient(135deg, #1f78cf, #0b3a75);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 12px 30px -8px rgba(26, 111, 196, 0.6);
+}

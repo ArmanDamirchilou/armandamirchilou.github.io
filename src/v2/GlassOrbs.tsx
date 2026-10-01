@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { AvatarMeasurement } from '../components/Avatar';
+import { useTheme } from './theme';
 
 /**
  * Pieces of smoked glass floating around the portrait: they catch the light,
@@ -65,18 +66,21 @@ export function GlassOrbs({
     return env;
   }, [gl]);
 
-  // Smoked glass: dark and see-through, lit only by its reflections, so it
-  // sits in the graphite palette instead of glowing white.
+  // At night, smoked glass: dark and see-through, lit only by its
+  // reflections, so it sits in the graphite palette. By day, clear glass
+  // with a frost of white, like bubbles over the cobalt.
+  const [theme] = useTheme();
+  const day = theme === 'light';
   const material = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
         envMap,
-        envMapIntensity: 1.6,
-        color: new THREE.Color('#0c0d0f'),
+        envMapIntensity: day ? 1.1 : 1.6,
+        color: new THREE.Color(day ? '#ffffff' : '#0c0d0f'),
         metalness: 0,
         roughness: 0.015,
         transparent: true,
-        opacity: 0.55,
+        opacity: day ? 0.4 : 0.55,
         clearcoat: 1,
         clearcoatRoughness: 0.03,
         iridescence: 0.3,
@@ -84,7 +88,7 @@ export function GlassOrbs({
         iridescenceThicknessRange: [180, 620],
         specularIntensity: 1,
       }),
-    [envMap]
+    [envMap, day]
   );
 
   const geometries = useMemo(() => PIECES.map((p) => geometryFor(p.shape)), []);

@@ -366,6 +366,9 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .is-dark .modal-accept:active { transform: scale(0.97); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45); }
 .is-dark :focus-visible { outline: 2px solid var(--accent-3); outline-offset: 3px; }
 
+/* Right end of the top bar: the theme switch, then Close. */
+.twin-topbar-end { display: flex; align-items: center; gap: 8px; }
+
 /* Back link: a chevron and the name. */
 .is-dark .twin-back { display: inline-flex; align-items: center; gap: 6px; }
 .is-dark .twin-back svg { width: 16px; height: 16px; }

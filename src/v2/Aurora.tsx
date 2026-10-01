@@ -1,4 +1,5 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
+import { useTheme, type Theme } from './theme';
 
 /**
  * The living wallpaper behind the glass: slow, flowing colour, like a phone's
@@ -25,6 +26,7 @@ uniform vec3 c1;
 uniform vec3 c2;
 uniform vec3 c3;
 uniform vec3 c4;
+uniform float light;
 
 // Cheap value noise + fbm, enough for soft ribbons of colour.
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -54,11 +56,17 @@ void main() {
   col = mix(col, c3, smoothstep(0.45, 0.95, r.x) * 0.9);
   col = mix(col, c4, smoothstep(0.55, 1.0, q.y) * 0.6);
 
-  // Keep it a night sky, not a rave: dark at the edges, a glow in the middle
-  // that grows while the twin speaks.
   float vign = smoothstep(1.25, 0.15, length(p * vec2(0.9, 1.1)));
-  float glow = 0.55 + 0.45 * energy;
-  col *= (0.28 + 0.72 * vign) * glow;
+  if (light > 0.5) {
+    // Daylight: soft sky blues that fade to paper white at the edges, with a
+    // touch more blue while the twin speaks.
+    col = mix(c1, col, (0.35 + 0.65 * vign) * (0.75 + 0.25 * energy));
+  } else {
+    // Night: dark at the edges, a glow in the middle that grows while the
+    // twin speaks.
+    float glow = 0.55 + 0.45 * energy;
+    col *= (0.28 + 0.72 * vign) * glow;
+  }
   col += (hash(uv * res + t) - 0.5) * 0.018; // a little grain, kills banding
   gl_FragColor = vec4(col, 1.0);
 }
@@ -69,13 +77,17 @@ const hex = (h: string) => {
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 };
 
-// Graphite with a crimson-velvet glow (#2c0f12 / #6b1e23, from a Pinterest
-// palette) under the pomegranate accent: one warm light in a dark room.
-export const AURORA_PALETTE = ['#0c0d0f', '#2c0f12', '#6b1e23', '#1b1d21'];
+// Dark: graphite with a crimson-velvet glow (#2c0f12 / #6b1e23, from a
+// Pinterest palette) under the pomegranate accent: one warm light in a dark
+// room. Light: paper white with the sky and cobalt blues of the reference.
+export const AURORA_PALETTE: Record<Theme, string[]> = {
+  dark: ['#0c0d0f', '#2c0f12', '#6b1e23', '#1b1d21'],
+  light: ['#f7f9fc', '#dbe9f8', '#97bee7', '#eef4fc'],
+};
 
 export function Aurora({
   className = 'aurora',
-  palette = AURORA_PALETTE,
+  palette: custom,
   energy,
   scale = 0.35,
 }: {
@@ -86,6 +98,8 @@ export function Aurora({
   scale?: number;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const [theme] = useTheme();
+  const palette = custom ?? AURORA_PALETTE[theme];
 
   useEffect(() => {
     const canvas = ref.current;
@@ -124,6 +138,7 @@ export function Aurora({
     const uT = u('t');
     const uEnergy = u('energy');
     ['c1', 'c2', 'c3', 'c4'].forEach((n, i) => gl.uniform3fv(u(n), hex(palette[i] ?? palette[0])));
+    gl.uniform1f(u('light'), theme === 'light' ? 1 : 0);
 
     const resize = () => {
       const w = Math.max(1, Math.round(canvas.clientWidth * scale));
@@ -163,7 +178,9 @@ export function Aurora({
       document.removeEventListener('visibilitychange', onVisibility);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  }, [palette, energy, scale]);
+  }, [palette, theme, energy, scale]);
 
-  return <canvas ref={ref} className={className} aria-hidden />;
+  // A fresh canvas per theme: the old one's WebGL context is released on
+  // cleanup, and a released context can't draw again.
+  return <canvas key={theme} ref={ref} className={className} aria-hidden />;
 }

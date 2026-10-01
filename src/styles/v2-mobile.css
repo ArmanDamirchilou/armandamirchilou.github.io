@@ -11,7 +11,8 @@
 .v2-tabbar,
 .v2-cards-dots,
 .v2-nav-mono,
-.v2-nav-time { display: none; }
+.v2-nav-time,
+.theme-toggle.v2-nav-theme-mobile { display: none; }
 
 /* The hero's shade fades out before its bottom edge, so there's no seam
    where the pinned hero hands over to the page below. */
@@ -68,6 +69,10 @@
     white-space: nowrap;
   }
   .v2-nav-time i { width: 6px; height: 6px; border-radius: 50%; background: #3ee08f; box-shadow: 0 0 8px #3ee08f; }
+  .theme-toggle.v2-nav-theme-mobile { display: inline-grid; margin-left: 6px; }
+  /* Room for the theme switch: the clock keeps its time, the label goes. */
+  .v2-nav-time-city { display: none; }
+  .v2-nav-time { padding: 8px 11px; }
 
   /* ── Tab bar ───────────────────────────────────────────────────────────── */
   .v2 > .v2-tabbar {

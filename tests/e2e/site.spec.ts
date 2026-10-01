@@ -121,6 +121,29 @@ test.describe('phone layout', () => {
   });
 });
 
+test.describe('light and dark', () => {
+  test('every visit opens in light mode, the switch goes dark, and a reload is light again', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' }); // the system setting doesn't decide
+    await page.goto('/');
+    const html = page.locator('html');
+    await expect(html).toHaveAttribute('data-theme', 'light');
+    const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(await bg()).toBe('rgb(247, 249, 252)');
+
+    await page.getByRole('button', { name: 'Switch to dark mode' }).filter({ visible: true }).first().click();
+    await expect(html).toHaveAttribute('data-theme', 'dark');
+    expect(await bg()).toBe('rgb(12, 13, 15)');
+
+    // The choice holds while moving around the site...
+    await page.locator('.v2-footer-links').getByRole('link', { name: 'Contact' }).click();
+    await expect(page).toHaveURL(/\/contact$/);
+    await expect(html).toHaveAttribute('data-theme', 'dark');
+    // ...but a new visit opens in light again.
+    await page.reload();
+    await expect(html).toHaveAttribute('data-theme', 'light');
+  });
+});
+
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
