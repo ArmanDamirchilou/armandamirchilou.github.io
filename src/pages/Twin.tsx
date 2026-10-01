@@ -429,9 +429,11 @@ export function Twin() {
         title="Hey, I'm Arman's twin"
         acceptLabel="Let's talk"
       >
-        I think with an AI model and speak in Arman's cloned voice, so every
-        answer is fresh. My words appear in the chat as I say them. Turn your
-        sound on and ask me anything.
+        I think with an AI model and talk in Arman's cloned voice, so you'll get
+        a fresh answer every time. I'm still a work in progress, though. Arman's
+        busy with his projects and his startup right now, but he keeps adding
+        more of his story and achievements to me when he can. My words show up
+        in the chat as I say them, so turn your sound on and ask me anything.
       </Modal>
 
       {/* Typing gate — its own message about answering in English */}
