@@ -398,11 +398,11 @@ export function Twin() {
         <section className="twin-chat-panel">
           {backendUp === false && (
             <div className="twin-offline-note" role="status">
-              <strong>The twin can't talk from here.</strong>
+              <strong>The twin can't reach its server right now.</strong>
               <span>
                 {isLocalHost()
                   ? 'The backend on port 3001 is not responding. Start it with npm run dev, then reload.'
-                  : "His brain and cloned voice run on a server that isn't part of this static site. The 3D avatar is live — the conversation isn't."}
+                  : "If you're in Iran, turn on a VPN and reload: the server's host blocks connections from there. Anywhere else, give it a minute and reload."}
               </span>
             </div>
           )}
