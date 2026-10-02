@@ -145,6 +145,12 @@ export function ChatInterface({
       </div>
 
       {messages.length === 0 && (
+        <p className="chat-studio-note">
+          My voice is still in the studio. Arman keeps tuning it, so it'll sound more like him every week.
+        </p>
+      )}
+
+      {messages.length === 0 && (
         <div className="quick-actions">
           {QUICK_QUESTIONS.map((q) => (
             <button key={q} className="quick-action" onClick={() => onSendMessage(q)}>

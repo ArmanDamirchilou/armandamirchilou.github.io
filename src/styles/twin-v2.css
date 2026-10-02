@@ -51,6 +51,17 @@ html.is-twin body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .twin-page.is-dark *, .twin-page.is-dark *::before, .twin-page.is-dark *::after { box-sizing: border-box; }
 .is-dark .chat-messages { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .is-dark .quick-actions { overscroll-behavior-x: contain; }
+/* Shown until the first message: the cloned voice is still being tuned. */
+.chat-studio-note {
+  margin: 14px 16px 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--mute);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
 .twin-page.is-dark > :is(.twin-topbar, .twin-layout) { position: relative; z-index: 1; }
 .twin-page.is-dark :is(button, input, textarea) { font-family: var(--sans); }
 

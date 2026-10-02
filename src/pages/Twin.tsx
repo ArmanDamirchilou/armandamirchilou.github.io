@@ -430,7 +430,8 @@ export function Twin() {
         acceptLabel="Let's talk"
       >
         I think with an AI model and talk in Arman's cloned voice, so you'll get
-        a fresh answer every time. I'm still a work in progress, though. Arman's
+        a fresh answer every time. The voice is still in the studio, though, and
+        it'll keep getting closer to the real thing. I'm a work in progress too. Arman's
         busy with his projects and his startup right now, but he keeps adding
         more of his story and achievements to me when he can. My words show up
         in the chat as I say them, so turn your sound on and ask me anything.
