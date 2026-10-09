@@ -10,6 +10,9 @@
       content="Arman Damirchilou (آرمان دمیرچیلو) is a sixteen-year-old AI engineer from Tehran building machine learning, computer vision and voice AI systems. Gold medalist at Innoverse Expo. Talk to his AI twin in his own cloned voice."
     />
     <link rel="canonical" href="https://armandamirchilou.github.io/" />
+    <link rel="alternate" hreflang="en" href="https://armandamirchilou.github.io/" />
+    <link rel="alternate" hreflang="fa" href="https://armandamirchilou.github.io/fa/" />
+    <link rel="alternate" hreflang="x-default" href="https://armandamirchilou.github.io/" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="author" content="Arman Damirchilou" />
     <!-- Google Search Console ownership: keep, or verification is lost. -->
@@ -43,9 +46,14 @@
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="theme-color" content="#0c0d0f" />
+    <style>
+      .search-fallback { max-width: 760px; margin: 10vh auto; padding: 0 24px 70px; color: #f4f4f4; font: 18px/1.65 system-ui, sans-serif; }
+      .search-fallback h1 { font-size: clamp(36px, 7vw, 68px); line-height: 1.1; }
+      .search-fallback h2 { margin-top: 2em; }
+      .search-fallback a { color: #a4c8ff; }
+    </style>
 
-    <!-- Structured data: tells search engines this site is about a person,
-         which is what drives the name-search knowledge panel. -->
+    <!-- Structured data identifies the person and website for crawlers. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -112,7 +120,16 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="search-fallback">
+        <h1>Arman Damirchilou</h1>
+        <p>Arman Damirchilou (آرمان دمیرچیلو, also written ارمان دمیرچیلو) is an AI engineer and high school student in Tehran, Iran. I build projects in machine learning, computer vision, speech and interactive AI.</p>
+        <p>My work includes a conversational <a href="/twin/">AI digital twin</a>, intelligent traffic control, smart water allocation, voice-based disease screening and tools for evaluating retrieval-augmented generation.</p>
+        <h2>About my work</h2>
+        <p>I began learning Python at eleven and have since built AI systems for practical problems. My projects and competition results are described on this website. You can also find my code on <a href="https://github.com/ArmanDamirchilou">GitHub</a> and my profile on <a href="https://www.linkedin.com/in/arman-damirchilou-a98322369/">LinkedIn</a>.</p>
+        <p><a href="/fa/" lang="fa" dir="rtl">درباره آرمان دمیرچیلو به فارسی</a> · <a href="/contact/">Contact Arman</a></p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

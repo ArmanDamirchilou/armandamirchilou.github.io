@@ -171,6 +171,7 @@ export function V2Footer() {
           <a href={LINKS.x} target="_blank" rel="noopener noreferrer">X</a>
           <a href={LINKS.telegram} target="_blank" rel="noopener noreferrer">Telegram</a>
           <Link to="/contact">Contact</Link>
+          <a href="/fa/" lang="fa">فارسی</a>
         </nav>
         <span className="v2-meta">Tehran {time}</span>
       </div>
