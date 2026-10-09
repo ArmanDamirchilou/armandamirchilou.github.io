@@ -18,14 +18,14 @@ const ROUTES = [
     title: 'AI Twin — talk to a digital Arman Damirchilou',
     description:
       'A real-time 3D avatar of Arman Damirchilou that answers in his cloned voice: local voice model, LLM reasoning and live facial animation.',
-    body: '<h1>Talk to the AI twin of Arman Damirchilou</h1><p>Arman Damirchilou built this interactive 3D avatar to answer questions about his AI projects, experience and plans. The twin combines a conversational model, voice and facial animation.</p><p><a href="/">About Arman Damirchilou</a> · <a href="/fa/" lang="fa">درباره آرمان دمیرچیلو</a></p>',
+    body: '<h1>Talk to the AI twin of Arman Damirchilou</h1><p>Arman Damirchilou built this interactive 3D avatar to answer questions about his AI projects, experience and plans. The twin combines a conversational model, voice and facial animation.</p><p><a href="/">About Arman Damirchilou</a></p>',
   },
   {
     path: 'contact',
     title: 'Contact Arman Damirchilou — AI Software Engineer',
     description:
       'Get in touch with Arman Damirchilou for AI, machine learning and full-stack engineering work. Based in Tehran, Iran, working with teams worldwide.',
-    body: '<h1>Contact Arman Damirchilou</h1><p>For AI projects, research or collaborations, email <a href="mailto:armandamirchilou@gmail.com">armandamirchilou@gmail.com</a>.</p><p><a href="/">About Arman Damirchilou</a> · <a href="/fa/" lang="fa">درباره آرمان دمیرچیلو</a></p>',
+    body: '<h1>Contact Arman Damirchilou</h1><p>For AI projects, research or collaborations, email <a href="mailto:armandamirchilou@gmail.com">armandamirchilou@gmail.com</a>.</p><p><a href="/">About Arman Damirchilou</a></p>',
   },
 ];
 

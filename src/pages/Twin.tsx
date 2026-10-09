@@ -402,7 +402,7 @@ export function Twin() {
               <span>
                 {isLocalHost()
                   ? 'The backend on port 3001 is not responding. Start it with npm run dev, then reload.'
-                  : "If you're in Iran, turn on a VPN and reload: the server's host blocks connections from there. Anywhere else, give it a minute and reload."}
+                  : 'The AI server is temporarily unavailable. This is a server-side outage, not a problem with your connection. Please try again later.'}
               </span>
             </div>
           )}
